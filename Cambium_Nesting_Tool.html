@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cambium Nesting Tool</title>
+<!-- 100% Offline — keine externen Ressourcen -->
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #242837;
+  --surface3: #2e3345;
+  --border: #353a4f;
+  --border-active: #5b6abf;
+  --text: #e8eaf0;
+  --text-dim: #8b90a5;
+  --text-muted: #5d6178;
+  --accent: #6c7ae0;
+  --accent-hover: #7d8ae8;
+  --accent-glow: rgba(108, 122, 224, 0.15);
+  --green: #4ade80;
+  --green-dim: rgba(74, 222, 128, 0.12);
+  --red: #f87171;
+  --red-dim: rgba(248, 113, 113, 0.12);
+  --orange: #fb923c;
+  --orange-dim: rgba(251, 146, 60, 0.12);
+  --yellow: #fbbf24;
+  --yellow-dim: rgba(251, 191, 36, 0.12);
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+.mono { font-family: 'Consolas', 'Courier New', monospace; font-size: 0.85em; }
+
+/* Layout */
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.app-header h1 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.app-header .logo {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.85rem; color: #fff;
+  flex-shrink: 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 3px;
+}
+.tab-btn {
+  padding: 8px 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active {
+  background: var(--surface2);
+  color: var(--text);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.main { max-width: 1400px; margin: 0 auto; padding: 24px 32px; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.card-title .badge {
+  background: var(--accent-glow);
+  color: var(--accent);
+  padding: 2px 10px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* Upload zone */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+.upload-zone input { display: none; }
+.upload-zone .icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+  opacity: 0.6;
+}
+.upload-zone p { color: var(--text-dim); font-size: 0.9rem; }
+.upload-zone .hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--surface3); border-color: var(--border-active); }
+.btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+.btn-icon {
+  width: 32px; height: 32px;
+  padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-icon:hover { border-color: var(--border-active); color: var(--text); }
+
+/* Table */
+.table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+th {
+  background: var(--surface2);
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+}
+td {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface2); }
+
+/* Column mapping */
+.mapping-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.mapping-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mapping-item label {
+  min-width: 100px;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+.mapping-item select {
+  flex: 1;
+  padding: 7px 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.82rem;
+}
+.mapping-item select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Package list */
+.pkg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.pkg-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: all 0.2s;
+  cursor: default;
+}
+.pkg-card:hover { border-color: var(--border-active); }
+.pkg-card .pkg-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+.pkg-card .pkg-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+.pkg-card .pkg-stats span { display: flex; align-items: center; gap: 4px; }
+.pkg-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Select for XML format */
+select.format-select {
+  padding: 7px 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.82rem;
+}
+
+/* Status badges */
+.status { padding: 3px 10px; border-radius: 99px; font-size: 0.75rem; font-weight: 500; }
+.status-ok { background: var(--green-dim); color: var(--green); }
+.status-warn { background: var(--orange-dim); color: var(--orange); }
+.status-err { background: var(--red-dim); color: var(--red); }
+.status-info { background: var(--yellow-dim); color: var(--yellow); }
+
+/* Compare section */
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 900px) { .compare-grid { grid-template-columns: 1fr; } }
+
+.diff-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.diff-stat {
+  background: var(--surface2);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+}
+.diff-stat .number {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.diff-stat .label {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* Nesting diff list */
+.diff-list { display: flex; flex-direction: column; gap: 8px; }
+.diff-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  border-left: 3px solid transparent;
+}
+.diff-item.missing { border-left-color: var(--red); background: var(--red-dim); }
+.diff-item.added { border-left-color: var(--green); background: var(--green-dim); }
+.diff-item.changed { border-left-color: var(--orange); background: var(--orange-dim); }
+.diff-item.ok { border-left-color: var(--green); }
+.diff-item .diff-label { margin-left: auto; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 20px;
+  font-size: 0.85rem;
+  box-shadow: var(--shadow);
+  z-index: 999;
+  animation: slideIn 0.3s ease;
+}
+@keyframes slideIn { from { transform: translateY(20px); opacity: 0; } }
+
+/* Section spacing */
+.section-gap { margin-top: 24px; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.flex-gap { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.text-dim { color: var(--text-dim); }
+.text-sm { font-size: 0.82rem; }
+.mt-12 { margin-top: 12px; }
+.mt-16 { margin-top: 16px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-16 { margin-bottom: 16px; }
+
+/* XML preview */
+.xml-preview {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  max-height: 400px;
+  overflow: auto;
+  white-space: pre;
+  color: var(--text-dim);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border); }
+
+/* Select all / filter bar */
+.filter-bar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface2);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.filter-bar input[type="text"] {
+  flex: 1; min-width: 200px;
+  padding: 7px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+.filter-bar input:focus { outline: none; border-color: var(--accent); }
+
+.checkbox-label {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.82rem; color: var(--text-dim); cursor: pointer;
+}
+.checkbox-label input { accent-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="logo">CN</div>
+  <h1>Cambium Nesting Tool</h1>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="export">XML Export nach Paket</button>
+    <button class="tab-btn" data-tab="compare">Nesting Vergleich</button>
+  </div>
+</div>
+
+<div class="main">
+  <!-- TAB 1: Export -->
+  <div id="tab-export" class="tab-content active">
+
+    <!-- Step 1: Upload -->
+    <div class="card" id="export-upload-card">
+      <div class="card-title">
+        <span>① CSV hochladen</span>
+        <span class="badge">Nesting-Liste</span>
+      </div>
+      <div class="upload-zone" id="export-drop">
+        <input type="file" accept=".csv,.txt" id="export-file">
+        <div class="icon">📂</div>
+        <p>CSV-Datei hierher ziehen oder klicken</p>
+        <div class="hint">Semikolon-getrennt (Cambium Export)</div>
+      </div>
+    </div>
+
+    <!-- Step 2: Column Mapping (hidden initially) -->
+    <div class="card" id="export-mapping-card" style="display:none">
+      <div class="card-title">
+        <span>② Spalten zuordnen</span>
+        <span class="badge" id="export-row-count"></span>
+      </div>
+      <div class="text-sm text-dim mb-16">Automatisch erkannt — bei Bedarf manuell anpassen.</div>
+      <div class="mapping-grid" id="mapping-grid"></div>
+      <div class="mt-16">
+        <button class="btn btn-primary" id="btn-apply-mapping">Zuordnung übernehmen</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Preview + Package Export -->
+    <div class="card" id="export-preview-card" style="display:none">
+      <div class="card-title">
+        <span>③ Vorschau</span>
+      </div>
+      <div class="table-wrap" style="max-height: 350px; overflow: auto;">
+        <table id="preview-table"></table>
+      </div>
+    </div>
+
+    <div class="card" id="export-packages-card" style="display:none">
+      <div class="card-title">
+        <span>④ Pakete → XML Export</span>
+      </div>
+      <div class="flex-between mb-16">
+        <div class="flex-gap">
+          <span class="text-sm text-dim">Format:</span>
+          <select class="format-select" id="xml-format">
+            <option value="boardstock">BoardStock (Cambium Import)</option>
+            <option value="exportdata">ExportData (Nesting-Liste)</option>
+          </select>
+        </div>
+        <div class="flex-gap">
+          <button class="btn btn-secondary btn-sm" id="btn-export-all">Alle Pakete als ZIP</button>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <input type="text" id="pkg-filter" placeholder="Paket suchen…">
+        <label class="checkbox-label">
+          <input type="checkbox" id="pkg-select-all">
+          Alle auswählen
+        </label>
+      </div>
+      <div class="pkg-grid" id="pkg-grid"></div>
+    </div>
+
+    <!-- XML Preview Modal -->
+    <div class="card" id="xml-preview-card" style="display:none">
+      <div class="flex-between mb-16">
+        <div class="card-title" style="margin-bottom:0">
+          <span>XML Vorschau</span>
+          <span class="badge" id="preview-pkg-name"></span>
+        </div>
+        <div class="flex-gap">
+          <button class="btn btn-secondary btn-sm" id="btn-copy-xml">Kopieren</button>
+          <button class="btn btn-primary btn-sm" id="btn-download-xml">Download</button>
+          <button class="btn btn-secondary btn-sm" id="btn-close-preview">✕</button>
+        </div>
+      </div>
+      <div class="xml-preview" id="xml-output"></div>
+    </div>
+  </div>
+
+  <!-- TAB 2: Compare -->
+  <div id="tab-compare" class="tab-content">
+    <div class="compare-grid">
+      <div class="card">
+        <div class="card-title">
+          <span>CSV Vorher</span>
+          <span class="badge">Original</span>
+        </div>
+        <div class="upload-zone" id="compare-drop-before">
+          <input type="file" accept=".csv,.txt" id="compare-file-before">
+          <div class="icon">📂</div>
+          <p>Originale Nesting-CSV</p>
+        </div>
+        <div id="compare-before-info" class="mt-12 text-sm text-dim"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          <span>CSV Nachher</span>
+          <span class="badge">Neu genestet</span>
+        </div>
+        <div class="upload-zone" id="compare-drop-after">
+          <input type="file" accept=".csv,.txt" id="compare-file-after">
+          <div class="icon">📂</div>
+          <p>Neue Nesting-CSV</p>
+        </div>
+        <div id="compare-after-info" class="mt-12 text-sm text-dim"></div>
+      </div>
+    </div>
+
+    <!-- Column mapping for compare -->
+    <div class="card" id="compare-mapping-card" style="display:none">
+      <div class="card-title">Spalten zuordnen (Vergleich)</div>
+      <div class="text-sm text-dim mb-8">Falls die beiden CSVs unterschiedliche Spalten haben, hier zuordnen.</div>
+      <div class="flex-between mb-16">
+        <strong class="text-sm">Vorher:</strong>
+      </div>
+      <div class="mapping-grid mb-16" id="compare-mapping-before"></div>
+      <div class="flex-between mb-16">
+        <strong class="text-sm">Nachher:</strong>
+      </div>
+      <div class="mapping-grid mb-16" id="compare-mapping-after"></div>
+      <button class="btn btn-primary" id="btn-apply-compare-mapping">Vergleich starten</button>
+    </div>
+
+    <!-- Compare Results -->
+    <div class="card" id="compare-results-card" style="display:none">
+      <div class="card-title">
+        <span>Vergleichsergebnis</span>
+      </div>
+      <div class="diff-summary" id="diff-summary"></div>
+
+      <div class="section-gap">
+        <h3 style="font-size:0.9rem; margin-bottom:12px;">Ungenutzte Nestings <span class="text-dim text-sm">(in Vorher, aber nicht in Nachher)</span></h3>
+        <div class="diff-list" id="diff-missing"></div>
+      </div>
+
+      <div class="section-gap">
+        <h3 style="font-size:0.9rem; margin-bottom:12px;">Neue Nestings <span class="text-dim text-sm">(in Nachher, aber nicht in Vorher)</span></h3>
+        <div class="diff-list" id="diff-added"></div>
+      </div>
+
+      <div class="section-gap">
+        <h3 style="font-size:0.9rem; margin-bottom:12px;">Paket-Änderungen <span class="text-dim text-sm">(Nesting existiert, aber Paket hat sich geändert)</span></h3>
+        <div class="diff-list" id="diff-changed"></div>
+      </div>
+
+      <div class="section-gap">
+        <h3 style="font-size:0.9rem; margin-bottom:12px;">Unveränderte Nestings</h3>
+        <div class="diff-list" id="diff-ok"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== GLOBALS =====================
+let exportData = null;    // parsed CSV rows
+let exportHeaders = [];   // raw CSV headers
+let columnMap = {};       // field -> column index
+let packages = {};        // grouped by package
+
+let compareBefore = null;
+let compareAfter = null;
+let compareHeadersBefore = [];
+let compareHeadersAfter = [];
+let compareMapBefore = {};
+let compareMapAfter = {};
+
+const FIELDS = [
+  { key: 'produktart', label: 'Produktart / Grade', aliases: ['produktart','grade','material','schnittklasse','holzart'] },
+  { key: 'breite', label: 'Breite (cm)', aliases: ['breite','breite (cm)','dimensiony','width','b'] },
+  { key: 'hoehe', label: 'Höhe (cm)', aliases: ['höhe','hoehe','höhe (cm)','hoehe (cm)','dimensionz','height','h','dicke'] },
+  { key: 'laenge', label: 'Länge (mm)', aliases: ['länge','laenge','länge (mm)','laenge (mm)','dimensionx','length','l'] },
+  { key: 'anzahl', label: 'Anzahl', aliases: ['anzahl','menge','quantity','stück','stueck','stk','reqquantity','anz'] },
+  { key: 'anmerkungen', label: 'Anmerkungen / ID', aliases: ['anmerkungen','anmerkung','id','nesting-id','nesting_id','bemerkung','comment','nr','nummer','nesting-nr'] },
+  { key: 'paket', label: 'Paket', aliases: ['paket','package','pak','gruppe','group'] },
+];
+
+// ===================== TAB SWITCHING =====================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ===================== CSV PARSING =====================
+function parseCSV(text) {
+  // Handle different encodings gracefully
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(l => l.trim());
+  if (lines.length < 2) return { headers: [], rows: [] };
+
+  const sep = ';';
+  const headers = parseCSVLine(lines[0], sep);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = parseCSVLine(lines[i], sep);
+    if (vals.length > 0 && vals.some(v => v.trim())) {
+      rows.push(vals);
+    }
+  }
+  return { headers, rows };
+}
+
+function parseCSVLine(line, sep) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (i + 1 < line.length && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        current += ch;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === sep) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+  }
+  result.push(current.trim());
+  return result;
+}
+
+function autoMapColumns(headers) {
+  const map = {};
+  const lowerHeaders = headers.map(h => h.toLowerCase().replace(/["""]/g, '').trim());
+  for (const field of FIELDS) {
+    let bestIdx = -1;
+    for (const alias of field.aliases) {
+      const idx = lowerHeaders.indexOf(alias);
+      if (idx !== -1) { bestIdx = idx; break; }
+    }
+    // partial match
+    if (bestIdx === -1) {
+      for (let i = 0; i < lowerHeaders.length; i++) {
+        for (const alias of field.aliases) {
+          if (lowerHeaders[i].includes(alias) || alias.includes(lowerHeaders[i])) {
+            bestIdx = i; break;
+          }
+        }
+        if (bestIdx !== -1) break;
+      }
+    }
+    map[field.key] = bestIdx;
+  }
+  return map;
+}
+
+function readFileAsText(file) {
+  return new Promise((resolve) => {
+    // Try UTF-8 first, then latin1
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = reader.result;
+      // Check if we got garbled chars (sign of wrong encoding)
+      if (text.includes('�')) {
+        const reader2 = new FileReader();
+        reader2.onload = () => resolve(reader2.result);
+        reader2.readAsText(file, 'ISO-8859-1');
+      } else {
+        resolve(text);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+}
+
+// ===================== EXPORT TAB =====================
+function setupUploadZone(zoneId, inputId, handler) {
+  const zone = document.getElementById(zoneId);
+  const input = document.getElementById(inputId);
+
+  zone.addEventListener('click', () => input.click());
+  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handler(e.dataTransfer.files[0]);
+  });
+  input.addEventListener('change', () => { if (input.files.length) handler(input.files[0]); });
+}
+
+setupUploadZone('export-drop', 'export-file', async (file) => {
+  const text = await readFileAsText(file);
+  const parsed = parseCSV(text);
+  exportHeaders = parsed.headers;
+  exportData = parsed.rows;
+  columnMap = autoMapColumns(exportHeaders);
+
+  document.getElementById('export-row-count').textContent = exportData.length + ' Zeilen';
+  buildMappingUI('mapping-grid', exportHeaders, columnMap);
+  document.getElementById('export-mapping-card').style.display = '';
+  document.getElementById('export-preview-card').style.display = 'none';
+  document.getElementById('export-packages-card').style.display = 'none';
+  document.getElementById('xml-preview-card').style.display = 'none';
+
+  // Update upload zone
+  const zone = document.getElementById('export-drop');
+  zone.innerHTML = `<div class="icon">✅</div><p>${file.name}</p><div class="hint">${exportData.length} Nestings geladen — Klicken zum Ersetzen</div>`;
+  zone.querySelector('input') || zone.insertAdjacentHTML('beforeend', '<input type="file" accept=".csv,.txt" id="export-file" style="display:none">');
+  const newInput = document.createElement('input');
+  newInput.type = 'file';
+  newInput.accept = '.csv,.txt';
+  newInput.style.display = 'none';
+  newInput.id = 'export-file';
+  zone.appendChild(newInput);
+  newInput.addEventListener('change', async () => {
+    if (newInput.files.length) {
+      const text2 = await readFileAsText(newInput.files[0]);
+      const parsed2 = parseCSV(text2);
+      exportHeaders = parsed2.headers;
+      exportData = parsed2.rows;
+      columnMap = autoMapColumns(exportHeaders);
+      document.getElementById('export-row-count').textContent = exportData.length + ' Zeilen';
+      buildMappingUI('mapping-grid', exportHeaders, columnMap);
+    }
+  });
+
+  showToast('CSV geladen: ' + exportData.length + ' Nestings erkannt');
+});
+
+function buildMappingUI(containerId, headers, map) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  for (const field of FIELDS) {
+    const item = document.createElement('div');
+    item.className = 'mapping-item';
+    const label = document.createElement('label');
+    label.textContent = field.label;
+    const select = document.createElement('select');
+    select.dataset.field = field.key;
+    const opt0 = document.createElement('option');
+    opt0.value = '-1';
+    opt0.textContent = '— nicht zugeordnet —';
+    select.appendChild(opt0);
+    headers.forEach((h, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = h.replace(/"/g, '');
+      if (map[field.key] === i) opt.selected = true;
+      select.appendChild(opt);
+    });
+    item.appendChild(label);
+    item.appendChild(select);
+    container.appendChild(item);
+  }
+}
+
+document.getElementById('btn-apply-mapping').addEventListener('click', () => {
+  // Read mapping from selects
+  document.querySelectorAll('#mapping-grid select').forEach(sel => {
+    columnMap[sel.dataset.field] = parseInt(sel.value);
+  });
+  buildPreview();
+  buildPackages();
+  document.getElementById('export-preview-card').style.display = '';
+  document.getElementById('export-packages-card').style.display = '';
+});
+
+function getVal(row, key) {
+  const idx = columnMap[key];
+  if (idx === undefined || idx < 0 || idx >= row.length) return '';
+  return row[idx].replace(/^"|"$/g, '').trim();
+}
+
+function buildPreview() {
+  const table = document.getElementById('preview-table');
+  const displayFields = FIELDS.filter(f => columnMap[f.key] >= 0);
+  let html = '<thead><tr>';
+  displayFields.forEach(f => html += `<th>${f.label}</th>`);
+  html += '</tr></thead><tbody>';
+  const maxRows = Math.min(exportData.length, 50);
+  for (let i = 0; i < maxRows; i++) {
+    html += '<tr>';
+    displayFields.forEach(f => {
+      html += `<td>${getVal(exportData[i], f.key)}</td>`;
+    });
+    html += '</tr>';
+  }
+  if (exportData.length > 50) {
+    html += `<tr><td colspan="${displayFields.length}" style="text-align:center;color:var(--text-muted)">… ${exportData.length - 50} weitere Zeilen …</td></tr>`;
+  }
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+function buildPackages() {
+  packages = {};
+  exportData.forEach((row, idx) => {
+    const pkg = getVal(row, 'paket') || '(kein Paket)';
+    if (!packages[pkg]) packages[pkg] = [];
+    packages[pkg].push({ row, idx });
+  });
+  renderPackageGrid();
+}
+
+function renderPackageGrid(filter = '') {
+  const grid = document.getElementById('pkg-grid');
+  grid.innerHTML = '';
+  const sortedKeys = Object.keys(packages).sort((a, b) => a.localeCompare(b, 'de'));
+
+  sortedKeys.forEach(pkg => {
+    if (filter && !pkg.toLowerCase().includes(filter.toLowerCase())) return;
+    const items = packages[pkg];
+
+    // Gather unique dimensions
+    const dims = new Set();
+    items.forEach(it => {
+      const b = getVal(it.row, 'breite');
+      const h = getVal(it.row, 'hoehe');
+      dims.add(`${b}×${h}`);
+    });
+
+    const card = document.createElement('div');
+    card.className = 'pkg-card';
+    card.innerHTML = `
+      <div class="pkg-name">${pkg}</div>
+      <div class="pkg-stats">
+        <span>📦 ${items.length} Nestings</span>
+        <span>📐 ${[...dims].join(', ')} cm</span>
+      </div>
+      <div class="pkg-actions">
+        <button class="btn btn-primary btn-sm" data-pkg="${pkg}" data-action="preview">Vorschau</button>
+        <button class="btn btn-secondary btn-sm" data-pkg="${pkg}" data-action="download">Download XML</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  // Attach events
+  grid.querySelectorAll('[data-action="preview"]').forEach(btn => {
+    btn.addEventListener('click', () => showXMLPreview(btn.dataset.pkg));
+  });
+  grid.querySelectorAll('[data-action="download"]').forEach(btn => {
+    btn.addEventListener('click', () => downloadPackageXML(btn.dataset.pkg));
+  });
+}
+
+document.getElementById('pkg-filter').addEventListener('input', (e) => {
+  renderPackageGrid(e.target.value);
+});
+
+// ===================== XML GENERATION =====================
+function generateBoardStockXML(pkgName) {
+  const items = packages[pkgName];
+  if (!items) return '';
+
+  // Group by Grade + DimY + DimZ (= same StockBoard)
+  const boards = {};
+  items.forEach(it => {
+    const grade = getVal(it.row, 'produktart');
+    const dimY = getVal(it.row, 'breite');
+    const dimZ = getVal(it.row, 'hoehe');
+    const key = `${grade}|${dimY}|${dimZ}`;
+    if (!boards[key]) boards[key] = { grade, dimY, dimZ, items: [] };
+    boards[key].items.push(it);
+  });
+
+  let xml = '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\n';
+  xml += '<BoardStock>\n';
+  xml += '  <Stocklist Version="1.0.0" MaxStackDefault="1">\n';
+
+  Object.values(boards).forEach(board => {
+    // Convert cm to mm for DimY/DimZ in attributes (* 10)
+    const dimYmm = parseFloat(board.dimY.replace(',', '.')) * 10;
+    const dimZmm = parseFloat(board.dimZ.replace(',', '.')) * 10;
+
+    xml += `    <StockBoard Name="Board" DimensionY="${dimYmm}" DimensionZ="${dimZmm}" Grade="${board.grade}" PartType="RectangularPart">\n`;
+
+    board.items.forEach(it => {
+      const dimX = getVal(it.row, 'laenge');
+      const anzahl = getVal(it.row, 'anzahl') || '1';
+      const id = getVal(it.row, 'anmerkungen');
+      const price = (parseFloat(dimX.replace(',', '.')) / 1000).toFixed(3);
+      xml += `      <StockBoardItem DimensionX="${dimX}" Price="${price}" Quantity="${anzahl}" Identifier="${id}" />\n`;
+    });
+
+    xml += '    </StockBoard>\n';
+  });
+
+  xml += '  </Stocklist>\n';
+  xml += '</BoardStock>';
+  return xml;
+}
+
+function generateExportDataXML(pkgName) {
+  const items = packages[pkgName];
+  if (!items) return '';
+
+  let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+  xml += '<ExportData>\n';
+  xml += '\t<Nestings>\n';
+
+  items.forEach((it, i) => {
+    xml += '\t\t<Nesting>\n';
+    xml += `\t\t\t<Grade>${getVal(it.row, 'produktart')}</Grade>\n`;
+    xml += `\t\t\t<DimensionY>${getVal(it.row, 'breite')}</DimensionY>\n`;
+    xml += `\t\t\t<DimensionZ>${getVal(it.row, 'hoehe')}</DimensionZ>\n`;
+    xml += `\t\t\t<DimensionX>${getVal(it.row, 'laenge')}</DimensionX>\n`;
+    const anzahl = getVal(it.row, 'anzahl') || '1';
+    xml += `\t\t\t<Stack>${anzahl}</Stack>\n`;
+    xml += `\t\t\t<ID>${getVal(it.row, 'anmerkungen')}</ID>\n`;
+    xml += `\t\t\t<Package>${pkgName}</Package>\n`;
+    xml += '\t\t</Nesting>\n';
+  });
+
+  xml += '\t</Nestings>\n';
+  xml += '</ExportData>';
+  return xml;
+}
+
+function getXML(pkgName) {
+  const fmt = document.getElementById('xml-format').value;
+  return fmt === 'boardstock' ? generateBoardStockXML(pkgName) : generateExportDataXML(pkgName);
+}
+
+function showXMLPreview(pkgName) {
+  const xml = getXML(pkgName);
+  document.getElementById('xml-output').textContent = xml;
+  document.getElementById('preview-pkg-name').textContent = pkgName;
+  document.getElementById('xml-preview-card').style.display = '';
+  document.getElementById('xml-preview-card').scrollIntoView({ behavior: 'smooth' });
+
+  // Store current pkg for download
+  document.getElementById('xml-preview-card').dataset.pkg = pkgName;
+}
+
+function downloadPackageXML(pkgName) {
+  const xml = getXML(pkgName);
+  const safeName = pkgName.replace(/[^a-zA-Z0-9_\-äöüÄÖÜß ]/g, '_');
+  downloadText(xml, `Nesting_${safeName}.xml`, 'application/xml');
+}
+
+document.getElementById('btn-copy-xml').addEventListener('click', () => {
+  const text = document.getElementById('xml-output').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('XML in Zwischenablage kopiert'));
+});
+
+document.getElementById('btn-download-xml').addEventListener('click', () => {
+  const pkg = document.getElementById('xml-preview-card').dataset.pkg;
+  if (pkg) downloadPackageXML(pkg);
+});
+
+document.getElementById('btn-close-preview').addEventListener('click', () => {
+  document.getElementById('xml-preview-card').style.display = 'none';
+});
+
+// Export all as ZIP (simple concatenation — or individual downloads)
+// ===================== PURE JS ZIP (no external libs) =====================
+function createZip(files) {
+  // files = [{ name: 'file.xml', content: 'string' }, ...]
+  // Returns a Uint8Array containing a valid ZIP archive (STORE, no compression)
+
+  const encoder = new TextEncoder();
+  const entries = files.map(f => ({
+    name: encoder.encode(f.name),
+    data: encoder.encode(f.content),
+  }));
+
+  // Calculate total size
+  let offset = 0;
+  const localHeaders = [];
+
+  entries.forEach(e => {
+    const headerSize = 30 + e.name.length;
+    localHeaders.push({ offset, headerSize });
+    offset += headerSize + e.data.length;
+  });
+
+  const centralStart = offset;
+  let centralSize = 0;
+  entries.forEach(e => { centralSize += 46 + e.name.length; });
+
+  const totalSize = offset + centralSize + 22;
+  const buf = new Uint8Array(totalSize);
+  const view = new DataView(buf.buffer);
+  let pos = 0;
+
+  function writeU16(val) { view.setUint16(pos, val, true); pos += 2; }
+  function writeU32(val) { view.setUint32(pos, val, true); pos += 4; }
+  function writeBytes(bytes) { buf.set(bytes, pos); pos += bytes.length; }
+
+  function crc32(data) {
+    let crc = 0xFFFFFFFF;
+    for (let i = 0; i < data.length; i++) {
+      crc ^= data[i];
+      for (let j = 0; j < 8; j++) {
+        crc = (crc >>> 1) ^ (crc & 1 ? 0xEDB88320 : 0);
+      }
+    }
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  // Write local file headers + data
+  entries.forEach((e, i) => {
+    const crc = crc32(e.data);
+    entries[i].crc = crc;
+
+    writeU32(0x04034B50);       // local file header signature
+    writeU16(20);               // version needed
+    writeU16(0);                // general purpose bit flag
+    writeU16(0);                // compression method (STORE)
+    writeU16(0);                // mod time
+    writeU16(0);                // mod date
+    writeU32(crc);              // crc-32
+    writeU32(e.data.length);    // compressed size
+    writeU32(e.data.length);    // uncompressed size
+    writeU16(e.name.length);    // filename length
+    writeU16(0);                // extra field length
+    writeBytes(e.name);
+    writeBytes(e.data);
+  });
+
+  // Write central directory
+  entries.forEach((e, i) => {
+    writeU32(0x02014B50);       // central directory signature
+    writeU16(20);               // version made by
+    writeU16(20);               // version needed
+    writeU16(0);                // flags
+    writeU16(0);                // compression (STORE)
+    writeU16(0);                // mod time
+    writeU16(0);                // mod date
+    writeU32(e.crc);            // crc-32
+    writeU32(e.data.length);    // compressed size
+    writeU32(e.data.length);    // uncompressed size
+    writeU16(e.name.length);    // filename length
+    writeU16(0);                // extra field length
+    writeU16(0);                // comment length
+    writeU16(0);                // disk number start
+    writeU16(0);                // internal attributes
+    writeU32(0);                // external attributes
+    writeU32(localHeaders[i].offset); // relative offset
+    writeBytes(e.name);
+  });
+
+  // End of central directory
+  writeU32(0x06054B50);         // EOCD signature
+  writeU16(0);                  // disk number
+  writeU16(0);                  // disk with central dir
+  writeU16(entries.length);     // entries on this disk
+  writeU16(entries.length);     // total entries
+  writeU32(centralSize);        // central dir size
+  writeU32(centralStart);       // central dir offset
+  writeU16(0);                  // comment length
+
+  return buf;
+}
+
+document.getElementById('btn-export-all').addEventListener('click', () => {
+  const sortedKeys = Object.keys(packages).sort((a, b) => a.localeCompare(b, 'de'));
+  if (sortedKeys.length === 0) return;
+
+  const files = sortedKeys.map(pkg => {
+    const safeName = pkg.replace(/[^a-zA-Z0-9_\-äöüÄÖÜß ]/g, '_');
+    return { name: `Nesting_${safeName}.xml`, content: getXML(pkg) };
+  });
+
+  const zipData = createZip(files);
+  const blob = new Blob([zipData], { type: 'application/zip' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Nestings_alle_Pakete.zip';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`ZIP mit ${files.length} XML-Dateien heruntergeladen`);
+});
+
+// ===================== COMPARE TAB =====================
+setupUploadZone('compare-drop-before', 'compare-file-before', async (file) => {
+  const text = await readFileAsText(file);
+  const parsed = parseCSV(text);
+  compareHeadersBefore = parsed.headers;
+  compareBefore = parsed.rows;
+  compareMapBefore = autoMapColumns(compareHeadersBefore);
+
+  const zone = document.getElementById('compare-drop-before');
+  zone.innerHTML = `<div class="icon">✅</div><p>${file.name}</p><div class="hint">${compareBefore.length} Nestings</div>`;
+  const newInput = document.createElement('input');
+  newInput.type = 'file'; newInput.accept = '.csv,.txt'; newInput.style.display = 'none'; newInput.id = 'compare-file-before';
+  zone.appendChild(newInput);
+  setupUploadZone('compare-drop-before', 'compare-file-before', arguments.callee);
+
+  document.getElementById('compare-before-info').textContent = `${compareBefore.length} Nestings, ${compareHeadersBefore.length} Spalten`;
+  checkCompareReady();
+});
+
+setupUploadZone('compare-drop-after', 'compare-file-after', async (file) => {
+  const text = await readFileAsText(file);
+  const parsed = parseCSV(text);
+  compareHeadersAfter = parsed.headers;
+  compareAfter = parsed.rows;
+  compareMapAfter = autoMapColumns(compareHeadersAfter);
+
+  const zone = document.getElementById('compare-drop-after');
+  zone.innerHTML = `<div class="icon">✅</div><p>${file.name}</p><div class="hint">${compareAfter.length} Nestings</div>`;
+  const newInput = document.createElement('input');
+  newInput.type = 'file'; newInput.accept = '.csv,.txt'; newInput.style.display = 'none'; newInput.id = 'compare-file-after';
+  zone.appendChild(newInput);
+  setupUploadZone('compare-drop-after', 'compare-file-after', arguments.callee);
+
+  document.getElementById('compare-after-info').textContent = `${compareAfter.length} Nestings, ${compareHeadersAfter.length} Spalten`;
+  checkCompareReady();
+});
+
+function checkCompareReady() {
+  if (compareBefore && compareAfter) {
+    // Show mapping
+    buildMappingUI('compare-mapping-before', compareHeadersBefore, compareMapBefore);
+    buildMappingUI('compare-mapping-after', compareHeadersAfter, compareMapAfter);
+    document.getElementById('compare-mapping-card').style.display = '';
+  }
+}
+
+document.getElementById('btn-apply-compare-mapping').addEventListener('click', () => {
+  // Read mappings
+  document.querySelectorAll('#compare-mapping-before select').forEach(sel => {
+    compareMapBefore[sel.dataset.field] = parseInt(sel.value);
+  });
+  document.querySelectorAll('#compare-mapping-after select').forEach(sel => {
+    compareMapAfter[sel.dataset.field] = parseInt(sel.value);
+  });
+  runComparison();
+});
+
+function getValC(row, key, map) {
+  const idx = map[key];
+  if (idx === undefined || idx < 0 || idx >= row.length) return '';
+  return row[idx].replace(/^"|"$/g, '').trim();
+}
+
+function nestingKey(row, map) {
+  // Create a unique key for a nesting based on dimensions + grade + ID
+  const grade = getValC(row, 'produktart', map);
+  const b = getValC(row, 'breite', map);
+  const h = getValC(row, 'hoehe', map);
+  const l = getValC(row, 'laenge', map);
+  const id = getValC(row, 'anmerkungen', map);
+  return `${id}|${grade}|${b}|${h}|${l}`;
+}
+
+function nestingKeyDimOnly(row, map) {
+  const grade = getValC(row, 'produktart', map);
+  const b = getValC(row, 'breite', map);
+  const h = getValC(row, 'hoehe', map);
+  const l = getValC(row, 'laenge', map);
+  return `${grade}|${b}|${h}|${l}`;
+}
+
+function runComparison() {
+  // Build maps: key -> { row, paket }
+  const beforeMap = new Map();
+  compareBefore.forEach(row => {
+    const key = nestingKey(row, compareMapBefore);
+    const paket = getValC(row, 'paket', compareMapBefore);
+    beforeMap.set(key, { row, paket, dimKey: nestingKeyDimOnly(row, compareMapBefore) });
+  });
+
+  const afterMap = new Map();
+  compareAfter.forEach(row => {
+    const key = nestingKey(row, compareMapAfter);
+    const paket = getValC(row, 'paket', compareMapAfter);
+    afterMap.set(key, { row, paket, dimKey: nestingKeyDimOnly(row, compareMapAfter) });
+  });
+
+  const missing = [];   // in before, not in after
+  const added = [];      // in after, not in before
+  const changed = [];    // same nesting, different paket
+  const ok = [];         // identical
+
+  beforeMap.forEach((val, key) => {
+    if (afterMap.has(key)) {
+      const afterVal = afterMap.get(key);
+      if (val.paket !== afterVal.paket) {
+        changed.push({ key, before: val, after: afterVal });
+      } else {
+        ok.push({ key, data: val });
+      }
+    } else {
+      missing.push({ key, data: val });
+    }
+  });
+
+  afterMap.forEach((val, key) => {
+    if (!beforeMap.has(key)) {
+      added.push({ key, data: val });
+    }
+  });
+
+  // Render results
+  document.getElementById('compare-results-card').style.display = '';
+
+  // Summary
+  document.getElementById('diff-summary').innerHTML = `
+    <div class="diff-stat">
+      <div class="number" style="color:var(--text)">${compareBefore.length}</div>
+      <div class="label">Nestings vorher</div>
+    </div>
+    <div class="diff-stat">
+      <div class="number" style="color:var(--text)">${compareAfter.length}</div>
+      <div class="label">Nestings nachher</div>
+    </div>
+    <div class="diff-stat">
+      <div class="number" style="color:var(--red)">${missing.length}</div>
+      <div class="label">Nicht genutzt</div>
+    </div>
+    <div class="diff-stat">
+      <div class="number" style="color:var(--green)">${added.length}</div>
+      <div class="label">Neu hinzugekommen</div>
+    </div>
+    <div class="diff-stat">
+      <div class="number" style="color:var(--orange)">${changed.length}</div>
+      <div class="label">Paket geändert</div>
+    </div>
+    <div class="diff-stat">
+      <div class="number" style="color:var(--green)">${ok.length}</div>
+      <div class="label">Unverändert</div>
+    </div>
+  `;
+
+  // Missing
+  const missingEl = document.getElementById('diff-missing');
+  if (missing.length === 0) {
+    missingEl.innerHTML = '<div class="text-sm text-dim">Keine — alle Nestings wurden genutzt ✅</div>';
+  } else {
+    missingEl.innerHTML = missing.map(m => {
+      const parts = m.key.split('|');
+      return `<div class="diff-item missing">
+        <span class="mono">#${parts[0]}</span>
+        <span>${parts[1]} ${parts[2]}×${parts[3]} cm</span>
+        <span class="mono">${parts[4]} mm</span>
+        <span class="diff-label"><span class="status status-err">Paket: ${m.data.paket}</span></span>
+      </div>`;
+    }).join('');
+  }
+
+  // Added
+  const addedEl = document.getElementById('diff-added');
+  if (added.length === 0) {
+    addedEl.innerHTML = '<div class="text-sm text-dim">Keine neuen Nestings</div>';
+  } else {
+    addedEl.innerHTML = added.map(a => {
+      const parts = a.key.split('|');
+      return `<div class="diff-item added">
+        <span class="mono">#${parts[0]}</span>
+        <span>${parts[1]} ${parts[2]}×${parts[3]} cm</span>
+        <span class="mono">${parts[4]} mm</span>
+        <span class="diff-label"><span class="status status-ok">Paket: ${a.data.paket}</span></span>
+      </div>`;
+    }).join('');
+  }
+
+  // Changed
+  const changedEl = document.getElementById('diff-changed');
+  if (changed.length === 0) {
+    changedEl.innerHTML = '<div class="text-sm text-dim">Keine Paket-Änderungen</div>';
+  } else {
+    changedEl.innerHTML = changed.map(c => {
+      const parts = c.key.split('|');
+      return `<div class="diff-item changed">
+        <span class="mono">#${parts[0]}</span>
+        <span>${parts[1]} ${parts[2]}×${parts[3]} cm</span>
+        <span class="mono">${parts[4]} mm</span>
+        <span class="diff-label">
+          <span class="status status-err">${c.before.paket}</span>
+          <span style="margin:0 4px">→</span>
+          <span class="status status-ok">${c.after.paket}</span>
+        </span>
+      </div>`;
+    }).join('');
+  }
+
+  // OK
+  const okEl = document.getElementById('diff-ok');
+  if (ok.length === 0) {
+    okEl.innerHTML = '<div class="text-sm text-dim">Keine unveränderten Nestings</div>';
+  } else if (ok.length > 30) {
+    okEl.innerHTML = `<div class="text-sm text-dim">${ok.length} Nestings sind identisch geblieben</div>`;
+  } else {
+    okEl.innerHTML = ok.map(o => {
+      const parts = o.key.split('|');
+      return `<div class="diff-item ok">
+        <span class="mono">#${parts[0]}</span>
+        <span>${parts[1]} ${parts[2]}×${parts[3]} cm</span>
+        <span class="mono">${parts[4]} mm</span>
+        <span class="diff-label"><span class="status status-ok">${o.data.paket}</span></span>
+      </div>`;
+    }).join('');
+  }
+
+  document.getElementById('compare-results-card').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ===================== UTILITIES =====================
+function downloadText(content, filename, mime) {
+  const blob = new Blob([content], { type: mime + ';charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function showToast(msg) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+</script>
+</body>
+</html>
