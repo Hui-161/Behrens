@@ -1845,8 +1845,7 @@ function resetEditor() {
    ============================================================ */
 function exportHtml() {
   const html = generateExportHtml();
-  downloadBlob(html, 'text/html;charset=utf-8',
-    'Elementdatenblatt_B_' + sanitize(state.header.elname || 'Element') + '_' + dateStamp() + '.html');
+  downloadBlob(html, 'text/html;charset=utf-8', buildFilename('html'));
   setStage(3);
   showToast('HTML-Export gespeichert.', 'success');
 }
@@ -1856,14 +1855,16 @@ function printDocument() {
   const w = window.open('', '_blank');
   w.document.write(html);
   w.document.close();
+  // Title des neuen Fensters setzen, damit der Browser ihn als Default-Filename
+  // beim "Als PDF speichern"-Dialog vorschlägt
+  w.document.title = buildFilename('').replace(/\.$/, '');
   setTimeout(() => w.print(), 500);
   setStage(3);
 }
 
 function downloadJson() {
   const data = JSON.stringify(state, null, 2);
-  downloadBlob(data, 'application/json',
-    'Elementdatenblatt_B_' + sanitize(state.header.elname || 'Element') + '_' + dateStamp() + '.json');
+  downloadBlob(data, 'application/json', buildFilename('json'));
   showToast('JSON-Backup gespeichert.', 'success');
 }
 
@@ -1875,7 +1876,19 @@ function downloadBlob(content, mime, filename) {
   link.click();
 }
 
-function sanitize(s) { return String(s).replace(/[^\w\-]/g, '_'); }
+function sanitize(s) { return String(s || '').replace(/[^\w\-]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, ''); }
+
+// Einheitlicher Dateiname: Elementdatenblatt_B_<VO-Nr>_<Elementbezeichnung>.<ext>
+// Fallback auf Datum, wenn beide leer sind.
+function buildFilename(ext) {
+  const vono = sanitize(state.header.vono);
+  const elname = sanitize(state.header.elname);
+  const parts = ['Elementdatenblatt_B'];
+  if (vono) parts.push(vono);
+  if (elname) parts.push(elname);
+  if (!vono && !elname) parts.push(dateStamp());
+  return parts.join('_') + (ext ? '.' + ext : '');
+}
 
 function generateExportHtml() {
   const h = state.header;
@@ -1922,7 +1935,7 @@ function generateExportHtml() {
 
   return '<!DOCTYPE html>\n' +
 '<html lang="de"><head><meta charset="UTF-8">\n' +
-'<title>Elementdatenblatt B – ' + esc(h.elname || '') + '</title>\n' +
+'<title>' + esc(buildFilename('')) + '</title>\n' +
 '<style>\n' +
 '  @page { size: A4; margin: 14mm 14mm; }\n' +
 '  html, body { margin: 0; padding: 0; }\n' +
