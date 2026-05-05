@@ -237,6 +237,62 @@ body {
 }
 .del-btn:hover { background: var(--red-dim); color: var(--red); border-color: var(--red); }
 
+/* Move-Buttons für Schicht-Reihenfolge */
+.move-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  width: 22px; height: 22px;
+  border-radius: var(--radius-sm);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; line-height: 1;
+  margin-right: 2px;
+  font-family: inherit;
+}
+.move-btn:hover:not([disabled]) {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.move-btn[disabled] { opacity: 0.25; cursor: not-allowed; }
+
+/* Pseudo-Zeile mit "+ Dämmung"-Button nach Riegelwerk-Block */
+tr.sub-add-row td {
+  padding: 6px 12px 8px 38px !important;
+  background: rgba(108, 122, 224, 0.03);
+  border-bottom-color: var(--border) !important;
+}
+.sub-add-btn {
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 5px 14px;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.8rem;
+}
+.sub-add-btn:hover {
+  border-color: var(--green);
+  color: var(--green);
+  border-style: solid;
+  background: var(--green-dim);
+}
+
+/* Sub-Schicht-Zeile (Dämmung im Riegelwerk) */
+.editor-table tr.sub-layer td { background: rgba(108, 122, 224, 0.04); }
+.editor-table tr.sub-layer:hover td { background: rgba(108, 122, 224, 0.08); }
+.editor-table tr.sub-layer td:first-child {
+  padding-left: 24px;
+  color: var(--text-muted);
+}
+.sub-layer-marker {
+  display: inline-block;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
 /* ============================================================
    STATS
    ============================================================ */
@@ -456,7 +512,11 @@ body {
   font-size: 0.85rem;
 }
 .suggestion:last-child { border-bottom: none; }
-.suggestion:hover { background: var(--accent-glow); }
+.suggestion:hover, .suggestion.selected { background: var(--accent-glow); }
+.suggestion.selected {
+  border-left: 3px solid var(--accent);
+  padding-left: 11px;
+}
 .suggestion strong { display: block; color: var(--text); }
 .suggestion small {
   color: var(--text-dim);
@@ -652,6 +712,20 @@ body {
 .mb-16 { margin-bottom: 16px; }
 .hidden { display: none !important; }
 
+kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.72rem;
+  background: var(--surface3);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.4);
+  vertical-align: baseline;
+  margin: 0 1px;
+}
+
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 4px; }
@@ -712,10 +786,10 @@ body {
       <div class="card">
         <div class="card-title">Kopfdaten <span class="badge">Allgemein</span></div>
         <div class="header-form">
-          <div class="field"><label>Firma</label><input type="text" id="f_company"></div>
-          <div class="field"><label>VO-Nr.</label><input type="text" id="f_vono" placeholder="z.B. AH_HQ308-0302"></div>
-          <div class="field"><label>Bauvorhaben</label><input type="text" id="f_project"></div>
-          <div class="field"><label>Bauort</label><input type="text" id="f_location"></div>
+          <div class="field"><label>Firma</label><input type="text" id="f_company" list="history-company" autocomplete="off"></div>
+          <div class="field"><label>VO-Nr.</label><input type="text" id="f_vono" list="history-vono" autocomplete="off" placeholder="z.B. AH_HQ308-0302"></div>
+          <div class="field"><label>Bauvorhaben</label><input type="text" id="f_project" list="history-project" autocomplete="off"></div>
+          <div class="field"><label>Bauort</label><input type="text" id="f_location" list="history-location" autocomplete="off"></div>
           <div class="field">
             <label>Elementart</label>
             <select id="f_eltype">
@@ -729,6 +803,10 @@ body {
           </div>
           <div class="field"><label>Elementbezeichnung</label><input type="text" id="f_elname" placeholder="z.B. AW-1"></div>
         </div>
+        <datalist id="history-vono"></datalist>
+        <datalist id="history-project"></datalist>
+        <datalist id="history-location"></datalist>
+        <datalist id="history-company"></datalist>
       </div>
 
       <!-- Visualisierung -->
@@ -810,11 +888,20 @@ body {
             <div class="text-sm text-dim">Druckbares Dokument oder Backup als JSON.</div>
           </div>
           <div class="flex-gap">
-            <button class="btn btn-secondary btn-sm" onclick="resetEditor()">↺ Neue Datei</button>
+            <button class="btn btn-secondary btn-sm" onclick="resetEditor()" title="Neue Datei (Alt+N)">↺ Neue Datei</button>
             <button class="btn btn-secondary btn-sm" onclick="downloadJson()">⬇ JSON</button>
             <button class="btn btn-secondary btn-sm" onclick="exportHtml()">📄 HTML</button>
-            <button class="btn btn-primary btn-sm" onclick="printDocument()">🖨 Drucken / PDF</button>
+            <button class="btn btn-primary btn-sm" onclick="printDocument()" title="Drucken / PDF (Alt+P)">🖨 Drucken / PDF</button>
           </div>
+        </div>
+        <div class="text-sm text-dim" style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border); display:flex; flex-wrap:wrap; gap:14px 22px;">
+          <span><kbd>Alt</kbd>+<kbd>V</kbd> VO-Nr</span>
+          <span><kbd>Alt</kbd>+<kbd>D</kbd> + Dämmung</span>
+          <span><kbd>Alt</kbd>+<kbd>B</kbd> + Verbindungsmittel</span>
+          <span><kbd>Alt</kbd>+<kbd>T</kbd> nächstes Pflichtfeld</span>
+          <span><kbd>Alt</kbd>+<kbd>P</kbd> Drucken / PDF</span>
+          <span><kbd>Alt</kbd>+<kbd>N</kbd> Neue Datei</span>
+          <span style="color:var(--text-muted)">In Vorschlagslisten: <kbd>↑</kbd><kbd>↓</kbd> navigieren · <kbd>Enter</kbd> wählen · <kbd>Esc</kbd> schließen</span>
         </div>
       </div>
     </div>
@@ -890,8 +977,8 @@ body {
    ============================================================ */
 const DEFAULT_MATERIALS = [
   // === KONSTRUKTIONSHOLZ ===
-  { keywords: ['KVH', 'KVH C24', 'KVH nSi', 'KVH Nsi', 'Konstruktionsvollholz'], name: 'KVH C24 nSi', properties: 'DIN EN 15497:2014', defaultDim: '60/160' },
-  { keywords: ['BSH', 'Brettschichtholz'], name: 'BSH', properties: 'DIN EN 14080', defaultDim: '' },
+  { keywords: ['KVH', 'KVH C24', 'KVH nSi', 'KVH Nsi', 'Konstruktionsvollholz'], name: 'KVH C24 nSi', properties: 'DIN EN 15497:2014', defaultDim: '60/160', defaultSpacing: '625' },
+  { keywords: ['BSH', 'Brettschichtholz'], name: 'BSH', properties: 'DIN EN 14080', defaultDim: '', defaultSpacing: '625' },
   { keywords: ['Latte', 'Lattung'], name: 'Latte', properties: 'Nach DIN EN 14081', defaultDim: '40/60' },
   { keywords: ['Konterlattung', 'Konterlatte'], name: 'Konterlattung', properties: 'Nach DIN EN 14081', defaultDim: '30/50' },
 
@@ -987,6 +1074,7 @@ const DEFAULT_FASTENERS = [
    ============================================================ */
 const LS_MAT = 'elementdatenblatt_materials_v3';
 const LS_FAS = 'elementdatenblatt_fasteners_v3';
+const LS_HEADER_HISTORY = 'elementdatenblatt_header_history_v1';
 
 let materialsDB = loadFromLs(LS_MAT, DEFAULT_MATERIALS);
 let fastenersDB = loadFromLs(LS_FAS, DEFAULT_FASTENERS);
@@ -1001,6 +1089,39 @@ function loadFromLs(key, fallback) {
 }
 function saveToLs(key, data) {
   try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
+}
+
+// --- Header-History (zuletzt genutzte Werte für Auto-Vervollständigung) ---
+const HEADER_HISTORY_FIELDS = ['vono', 'project', 'location', 'company'];
+
+function loadHeaderHistory() {
+  const empty = { vono: [], project: [], location: [], company: [] };
+  try {
+    const v = localStorage.getItem(LS_HEADER_HISTORY);
+    return v ? Object.assign(empty, JSON.parse(v)) : empty;
+  } catch (e) { return empty; }
+}
+
+function saveHeaderHistory() {
+  // Aktuelle Header-Werte vorne in die jeweilige Liste einreihen, max. 10 behalten
+  const history = loadHeaderHistory();
+  HEADER_HISTORY_FIELDS.forEach(f => {
+    const val = (state.header[f] || '').trim();
+    if (!val) return;
+    if (!history[f]) history[f] = [];
+    history[f] = [val, ...history[f].filter(v => v !== val)].slice(0, 10);
+  });
+  saveToLs(LS_HEADER_HISTORY, history);
+  refreshHeaderDatalists();
+}
+
+function refreshHeaderDatalists() {
+  const history = loadHeaderHistory();
+  HEADER_HISTORY_FIELDS.forEach(f => {
+    const dl = document.getElementById('history-' + f);
+    if (!dl) return;
+    dl.innerHTML = (history[f] || []).map(v => '<option value="' + esc(v) + '">').join('');
+  });
 }
 
 /* ============================================================
@@ -1245,6 +1366,7 @@ function enrichState() {
     if (m) {
       if (!layer.properties) { layer.properties = m.properties; layer.autoFilled.properties = true; }
       if (!layer.dimension && m.defaultDim) { layer.dimension = m.defaultDim; layer.autoFilled.dimension = true; }
+      if (!layer.spacing && m.defaultSpacing) { layer.spacing = m.defaultSpacing; layer.autoFilled.spacing = true; }
     }
   }
   for (const f of state.fasteners) {
@@ -1258,15 +1380,18 @@ function enrichState() {
   }
 }
 
-// Legt für jede Schicht (außer Riegelwerk) ein Verbindungsmittel an,
-// sofern noch keines mit der Schichtnummer existiert. Gibt Anzahl Neueinträge zurück.
+// Legt für jede Schicht (außer Riegelwerk und Sub-Dämmung) ein Verbindungsmittel an,
+// sofern noch keines mit der Display-Nummer existiert. Gibt Anzahl Neueinträge zurück.
 function autoCreateMissingFasteners() {
   const existing = new Set(state.fasteners.map(f => String(f.to || '').trim()));
   let added = 0;
-  state.layers.forEach((layer, idx) => {
+  let mainNum = 0;
+  state.layers.forEach(layer => {
+    if (layer.isInsulation) return; // Sub-Dämmung überspringen (kein eigenes VM)
+    mainNum++;
     if (!layer.product) return;
     if (isStructureLayer(layer.product)) return;
-    const layerNum = String(idx + 1);
+    const layerNum = String(mainNum);
     if (existing.has(layerNum)) return;
     state.fasteners.push({
       to: layerNum, type: '', properties: '', dimension: '', spacing: '',
@@ -1291,15 +1416,24 @@ function autoCreateMissingFastenersUI() {
 
 // Liefert die Schichtdicke der vom Verbindungsmittel referenzierten Schicht (über `to`)
 // — null falls Schicht nicht gefunden oder Dimension nicht parsebar.
+// Liefert die Schichtdicke der vom Verbindungsmittel referenzierten Schicht (über `to`).
+// `to` ist immer eine Display-Hauptnummer (1, 2, 3 ...) — Sub-Dämmungen werden übersprungen.
 function getMaterialThicknessForFastener(fastener) {
   if (!fastener.to) return null;
   const toNum = parseInt(String(fastener.to).trim(), 10);
-  if (isNaN(toNum) || toNum < 1 || toNum > state.layers.length) return null;
-  const layer = state.layers[toNum - 1];
-  if (!layer || !layer.dimension) return null;
-  const parsed = parseDim(layer.dimension);
-  if (!parsed) return null;
-  return getLayerThickness(parsed, layer.product, layer.swapDim);
+  if (isNaN(toNum) || toNum < 1) return null;
+  let mainNum = 0;
+  for (const layer of state.layers) {
+    if (layer.isInsulation) continue;
+    mainNum++;
+    if (mainNum === toNum) {
+      if (!layer.dimension) return null;
+      const parsed = parseDim(layer.dimension);
+      if (!parsed) return null;
+      return getLayerThickness(parsed, layer.product, layer.swapDim);
+    }
+  }
+  return null;
 }
 
 // Prüft, ob die Klammer dick genug ist für die referenzierte Schichtdicke.
@@ -1349,6 +1483,115 @@ function esc(s) {
 function dateStamp() {
   const d = new Date();
   return d.getFullYear() + ('0' + (d.getMonth()+1)).slice(-2) + ('0' + d.getDate()).slice(-2);
+}
+
+/* ============================================================
+   6b) TASTENKÜRZEL
+   Alt+V = VO-Nr · Alt+D = + Dämmung · Alt+B = + Verbindung
+   Alt+P = PDF · Alt+N = Neu · Alt+T = nächstes Pflichtfeld
+   ============================================================ */
+function setupKeyboardShortcuts() {
+  window.addEventListener('keydown', e => {
+    // Nur reines Alt (kein Strg/Meta), keine Buchstabe-mit-Modifier-Combos die Browser nutzt
+    if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    const key = e.key.toLowerCase();
+    const editorVisible = !document.getElementById('editorArea').classList.contains('hidden');
+    switch (key) {
+      case 'v':
+        e.preventDefault();
+        focusVono();
+        break;
+      case 'd':
+        if (!editorVisible) return;
+        e.preventDefault();
+        addInsulationViaShortcut();
+        break;
+      case 'b':
+        if (!editorVisible) return;
+        e.preventDefault();
+        addFastener();
+        showToast('Verbindungsmittel hinzugefügt (Alt+B)', 'success');
+        break;
+      case 'p':
+        if (!editorVisible || state.layers.length === 0) return;
+        e.preventDefault();
+        printDocument();
+        break;
+      case 'n':
+        e.preventDefault();
+        if (editorVisible) resetEditor();
+        break;
+      case 't':
+        if (!editorVisible) return;
+        e.preventDefault();
+        focusNextRequiredField();
+        break;
+    }
+  });
+}
+
+function focusVono() {
+  const el = document.getElementById('f_vono');
+  if (!el) return;
+  // Falls Editor versteckt und nur Drop-Area da ist: Editor öffnen via "Leer starten"?
+  // Stattdessen: nur fokussieren wenn Editor sichtbar
+  if (document.getElementById('editorArea').classList.contains('hidden')) {
+    showToast('Erst Datei importieren oder "Leer starten".', 'error');
+    return;
+  }
+  el.focus();
+  el.select();
+}
+
+// Alt+D: Dämmung als Sub-Schicht hinzufügen.
+// — Wenn Cursor in einer Schicht-Zeile ist, an deren Riegelwerk-Block anhängen
+// — Sonst: an erste Riegelwerk-Schicht anhängen
+function addInsulationViaShortcut() {
+  const active = document.activeElement;
+  if (active && active.dataset && active.dataset.idx !== undefined) {
+    const tbody = active.closest('tbody');
+    if (tbody && tbody.id === 'layersBody') {
+      const idx = parseInt(active.dataset.idx, 10);
+      let pIdx = idx;
+      while (pIdx >= 0 && state.layers[pIdx].isInsulation) pIdx--;
+      if (pIdx >= 0 && isStructureLayer(state.layers[pIdx].product)) {
+        addInsulationLayer(pIdx);
+        showToast('Sub-Dämmung hinzugefügt (Alt+D)', 'success');
+        return;
+      }
+    }
+  }
+  // Fallback: erste Riegelwerk-Schicht
+  for (let i = 0; i < state.layers.length; i++) {
+    if (!state.layers[i].isInsulation && isStructureLayer(state.layers[i].product)) {
+      addInsulationLayer(i);
+      showToast('Sub-Dämmung an Schicht ' + (mainNumOf(i)) + ' hinzugefügt (Alt+D)', 'success');
+      return;
+    }
+  }
+  showToast('Keine Riegelwerk-Schicht (KVH/BSH) im Aufbau gefunden.', 'error');
+}
+
+function mainNumOf(idx) {
+  let m = 0;
+  for (let i = 0; i <= idx; i++) if (!state.layers[i].isInsulation) m++;
+  return m;
+}
+
+// Alt+T: Springt zum nächsten leeren Pflichtfeld in Reihenfolge Header → Schichten → Verbindungen
+function focusNextRequiredField() {
+  const all = Array.from(document.querySelectorAll('#editorArea input[type="text"]:not([disabled]), #editorArea textarea:not([disabled])'));
+  const fromIdx = all.indexOf(document.activeElement);
+  for (let i = 1; i <= all.length; i++) {
+    const idx = (fromIdx + i + all.length) % all.length;
+    const el = all[idx];
+    if (!el.value || !el.value.trim()) {
+      el.focus();
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+  }
+  showToast('✓ Alle Felder ausgefüllt.', 'success');
 }
 
 /* ============================================================
@@ -1417,16 +1660,34 @@ function colorForProduct(name) {
 function renderVisualization() {
   const container = document.getElementById('vizContainer');
   if (!container) return;
-  const validLayers = state.layers
-    .map((l, idx) => Object.assign({}, l, { originalIdx: idx, parsed: parseDim(l.dimension) }))
-    .filter(l => l.parsed && l.parsed.a > 0 && l.product);
 
-  if (validLayers.length === 0) {
+  // Display-Nummern berechnen (Hauptschichten zählen, Sub-Schichten kriegen X.Y)
+  let mainNum = 0;
+  let subNum = 0;
+  const enriched = state.layers.map((l, idx) => {
+    let displayNum;
+    if (l.isInsulation) {
+      subNum++;
+      displayNum = mainNum + '.' + subNum;
+    } else {
+      mainNum++;
+      subNum = 0;
+      displayNum = String(mainNum);
+    }
+    return Object.assign({}, l, { originalIdx: idx, displayNum, parsed: parseDim(l.dimension) });
+  });
+
+  // Wand-Schichten: nur Hauptschichten (keine Sub-Dämmung) — sie stecken IM Riegelwerk
+  const wallLayers = enriched.filter(l => !l.isInsulation && l.parsed && l.parsed.a > 0 && l.product);
+  // Sub-Dämmungen separat für Legende
+  const subLayers = enriched.filter(l => l.isInsulation && l.product);
+
+  if (wallLayers.length === 0) {
     container.innerHTML = '<div class="viz-empty">Schichten hinzufügen, um die Visualisierung zu generieren.</div>';
     return;
   }
 
-  const layerWidths = validLayers.map(l => getLayerThickness(l.parsed, l.product, l.swapDim));
+  const layerWidths = wallLayers.map(l => getLayerThickness(l.parsed, l.product, l.swapDim));
   const totalWidth = layerWidths.reduce((s, w) => s + w, 0);
   if (totalWidth <= 0) {
     container.innerHTML = '<div class="viz-empty">Dimensionen unvollständig.</div>';
@@ -1443,12 +1704,27 @@ function renderVisualization() {
   svg += '<text x="' + PAD_L + '" y="22" font-family="Arial" font-size="13" font-weight="bold" fill="#666">außen ←</text>';
   svg += '<text x="' + (SVG_W - PAD_R) + '" y="22" font-family="Arial" font-size="13" font-weight="bold" fill="#666" text-anchor="end">→ innen</text>';
 
-  // Schichten zeichnen
+  // Schichten zeichnen — Sub-Dämmung kriegt diagonale Schraffur über dem Riegelwerk-Block
   let xCursor = PAD_L;
-  validLayers.forEach((layer, i) => {
+  let patternCounter = 0;
+  wallLayers.forEach((layer, i) => {
     const w = layerWidths[i] * scale;
     const color = colorForProduct(layer.product);
     svg += '<rect x="' + xCursor + '" y="' + PAD_T + '" width="' + w + '" height="' + wallH + '" fill="' + color + '" stroke="#222" stroke-width="1" />';
+
+    // Wenn diese Schicht eine Sub-Dämmung hat → Schraffur-Overlay als Hinweis
+    const hasInsulation = state.layers.some((l, idx) =>
+      l.isInsulation && idx > layer.originalIdx &&
+      // Suche, ob l direkt nach layer kommt (mit ggf. anderen Sub-Schichten dazwischen)
+      state.layers.slice(layer.originalIdx + 1, idx + 1).every(x => x.isInsulation)
+    );
+    if (hasInsulation && isStructureLayer(layer.product)) {
+      const patternId = 'insulation-pattern-' + (patternCounter++);
+      svg += '<defs><pattern id="' + patternId + '" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">' +
+             '<line x1="0" y1="0" x2="0" y2="8" stroke="#fff" stroke-width="2" opacity="0.6"/></pattern></defs>';
+      svg += '<rect x="' + xCursor + '" y="' + PAD_T + '" width="' + w + '" height="' + wallH + '" fill="url(#' + patternId + ')" pointer-events="none"/>';
+    }
+
     const labelX = xCursor + w / 2;
     if (w > 22) {
       svg += '<text x="' + labelX + '" y="' + (PAD_T - 8) + '" font-family="Arial" font-size="11" fill="#333" text-anchor="middle">' + layerWidths[i] + '</text>';
@@ -1458,11 +1734,13 @@ function renderVisualization() {
     xCursor += w;
   });
 
-  // Legende im SVG
+  // Legende im SVG (Hauptschichten + Sub-Dämmung markiert)
   let legendY = PAD_T + wallH + 28;
   let legendX = PAD_L;
-  validLayers.forEach((layer, i) => {
-    const labelText = (i + 1) + '. ' + layer.product + (layer.parsed.b ? ' ' + layer.parsed.a + '/' + layer.parsed.b : ' ' + layer.parsed.a);
+  enriched.filter(l => l.product).forEach(layer => {
+    const dim = layer.parsed ? (layer.parsed.b ? layer.parsed.a + '/' + layer.parsed.b : String(layer.parsed.a)) : '';
+    const prefix = layer.isInsulation ? '↳ ' : '';
+    const labelText = prefix + layer.displayNum + '. ' + layer.product + (dim ? ' ' + dim : '');
     const labelW = labelText.length * 6.5 + 30;
     if (legendX + labelW > SVG_W - PAD_R) {
       legendX = PAD_L;
@@ -1476,23 +1754,23 @@ function renderVisualization() {
   svg += '<text x="' + (SVG_W - PAD_R) + '" y="' + (SVG_H - 8) + '" font-family="Arial" font-size="11" fill="#666" text-anchor="end">Gesamtdicke: ' + totalWidth + ' mm</text>';
   svg += '</svg>';
 
-  // Toggle-Buttons unter dem SVG (für jede Schicht)
+  // Toggle-Buttons unter dem SVG (für jede Hauptschicht)
   let buttonsHtml = '<div class="viz-controls"><span class="viz-controls-label">Schichtdicke:</span>';
-  validLayers.forEach((layer, i) => {
+  wallLayers.forEach((layer, i) => {
     if (layer.parsed.b) {
       const active = layerWidths[i];
       const activeIsA = active === layer.parsed.a;
       const aClass = activeIsA ? 'dim-active' : 'dim-inactive';
       const bClass = activeIsA ? 'dim-inactive' : 'dim-active';
       buttonsHtml += '<button class="viz-swap-btn" onclick="toggleSwapDim(' + layer.originalIdx + ')" title="Dimension tauschen — die hervorgehobene Zahl ist die Schichtdicke">' +
-        '<span class="num">' + (i + 1) + '</span>' +
+        '<span class="num">' + layer.displayNum + '</span>' +
         '<span class="' + aClass + '">' + layer.parsed.a + '</span>' +
         '<span class="arrow">⇄</span>' +
         '<span class="' + bClass + '">' + layer.parsed.b + '</span>' +
         '</button>';
     } else {
       buttonsHtml += '<button class="viz-swap-btn" disabled title="Nur eine Dimension — nichts zu tauschen">' +
-        '<span class="num">' + (i + 1) + '</span>' +
+        '<span class="num">' + layer.displayNum + '</span>' +
         '<span class="dim-active">' + layer.parsed.a + '</span>' +
         '</button>';
     }
@@ -1511,44 +1789,88 @@ function toggleSwapDim(idx) {
 
 /* ============================================================
    7) PORTAL-SUGGESTIONS (body-level fixed Dropdown)
+   Mit Tastatur-Navigation: ↑↓ navigiert, Enter wählt aus, Esc schließt
    ============================================================ */
 let activePortalInput = null;
 let activePortalCallback = null;
+let activePortalItems = [];
+let activePortalSelectedIdx = -1;
 
 function attachPortalSuggestions(input, getSuggestions, onSelect) {
   const portal = document.getElementById('suggestionsPortal');
 
+  const renderItems = () => {
+    portal.innerHTML = activePortalItems.map((it, i) =>
+      '<div class="suggestion ' + (i === activePortalSelectedIdx ? 'selected' : '') + '" data-i="' + i + '"><strong>' + esc(it.label) + '</strong><small>' + esc(it.sub) + '</small></div>'
+    ).join('');
+    portal.querySelectorAll('.suggestion').forEach(el => {
+      el.onmousedown = e => {
+        e.preventDefault();
+        const i = parseInt(el.dataset.i, 10);
+        select(activePortalItems[i]);
+      };
+    });
+    // Aktives Element ggf. ins Sichtfeld scrollen
+    const sel = portal.querySelector('.suggestion.selected');
+    if (sel) sel.scrollIntoView({ block: 'nearest' });
+  };
+
+  const select = item => {
+    onSelect(item);
+    portal.classList.remove('visible');
+    activePortalInput = null;
+    activePortalItems = [];
+    activePortalSelectedIdx = -1;
+  };
+
   const update = () => {
     if (activePortalInput !== input) return;
-    const items = getSuggestions();
-    if (!items.length) { portal.classList.remove('visible'); return; }
-    portal.innerHTML = items.map((it, i) =>
-      '<div class="suggestion" data-i="' + i + '"><strong>' + esc(it.label) + '</strong><small>' + esc(it.sub) + '</small></div>'
-    ).join('');
+    activePortalItems = getSuggestions();
+    if (!activePortalItems.length) {
+      portal.classList.remove('visible');
+      activePortalSelectedIdx = -1;
+      return;
+    }
+    activePortalSelectedIdx = 0; // erstes Element ist initial markiert
+    renderItems();
     const rect = input.getBoundingClientRect();
     portal.style.left = rect.left + 'px';
     portal.style.top = (rect.bottom + 2) + 'px';
     portal.style.minWidth = Math.max(rect.width, 240) + 'px';
     portal.classList.add('visible');
-    portal.querySelectorAll('.suggestion').forEach(el => {
-      el.onmousedown = e => {
-        e.preventDefault();
-        const i = parseInt(el.dataset.i, 10);
-        onSelect(items[i]);
-        portal.classList.remove('visible');
-        activePortalInput = null;
-      };
-    });
   };
 
   input.addEventListener('focus', () => { activePortalInput = input; activePortalCallback = update; update(); });
   input.addEventListener('input', () => { activePortalInput = input; activePortalCallback = update; update(); });
+  input.addEventListener('keydown', e => {
+    if (!portal.classList.contains('visible') || !activePortalItems.length) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activePortalSelectedIdx = (activePortalSelectedIdx + 1) % activePortalItems.length;
+      renderItems();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activePortalSelectedIdx = (activePortalSelectedIdx - 1 + activePortalItems.length) % activePortalItems.length;
+      renderItems();
+    } else if (e.key === 'Enter') {
+      if (activePortalSelectedIdx >= 0) {
+        e.preventDefault();
+        select(activePortalItems[activePortalSelectedIdx]);
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      portal.classList.remove('visible');
+      activePortalSelectedIdx = -1;
+    }
+  });
   input.addEventListener('blur', () => {
     setTimeout(() => {
       if (activePortalInput === input) {
         portal.classList.remove('visible');
         activePortalInput = null;
         activePortalCallback = null;
+        activePortalItems = [];
+        activePortalSelectedIdx = -1;
       }
     }, 200);
   });
@@ -1586,24 +1908,92 @@ function bindHeaderInputs() {
 function renderLayers() {
   const tbody = document.getElementById('layersBody');
   tbody.innerHTML = '';
+  let mainNum = 0;
+  let subNum = 0;
+
+  // Hilfen für Move-Button-Status
+  const canUp = idx => {
+    const l = state.layers[idx];
+    if (!l) return false;
+    if (l.isInsulation) {
+      // Sub-Schicht: nur tauschbar mit anderer Sub-Schicht direkt davor (gleicher Block)
+      return idx > 0 && state.layers[idx - 1].isInsulation;
+    }
+    // Hauptschicht: gibt es davor eine andere Hauptschicht?
+    for (let i = idx - 1; i >= 0; i--) {
+      if (!state.layers[i].isInsulation) return true;
+    }
+    return false;
+  };
+  const canDown = idx => {
+    const l = state.layers[idx];
+    if (!l) return false;
+    if (l.isInsulation) {
+      return idx + 1 < state.layers.length && state.layers[idx + 1].isInsulation;
+    }
+    // Hauptschicht: gibt es danach eine weitere Hauptschicht?
+    let blockEnd = idx + 1;
+    while (blockEnd < state.layers.length && state.layers[blockEnd].isInsulation) blockEnd++;
+    return blockEnd < state.layers.length;
+  };
+
   state.layers.forEach((layer, idx) => {
+    let displayNum;
+    if (layer.isInsulation) {
+      subNum++;
+      displayNum = mainNum + '.' + subNum;
+    } else {
+      mainNum++;
+      subNum = 0;
+      displayNum = String(mainNum);
+    }
+    const moveBtns =
+      '<button class="move-btn" onclick="moveLayerUp(' + idx + ')"' + (canUp(idx) ? '' : ' disabled') + ' title="Nach oben">▲</button>' +
+      '<button class="move-btn" onclick="moveLayerDown(' + idx + ')"' + (canDown(idx) ? '' : ' disabled') + ' title="Nach unten">▼</button>';
+    const numCell = layer.isInsulation
+      ? '<td style="text-align:center; font-weight:500;"><span class="sub-layer-marker">↳</span>' + displayNum + '</td>'
+      : '<td class="text-dim" style="text-align:center; font-weight:600;">' + displayNum + '</td>';
     const tr = document.createElement('tr');
+    if (layer.isInsulation) tr.className = 'sub-layer';
     tr.innerHTML =
-      '<td class="text-dim" style="text-align:center; font-weight:600;">' + (idx + 1) + '</td>' +
-      '<td><input type="text" class="autocomplete-material" data-field="product" data-idx="' + idx + '" value="' + esc(layer.product) + '" placeholder="z.B. KVH, OSB ..."></td>' +
+      numCell +
+      '<td><input type="text" class="autocomplete-material" data-field="product" data-idx="' + idx + '" value="' + esc(layer.product) + '" placeholder="' + (layer.isInsulation ? 'z.B. Mineralwolledämmung' : 'z.B. KVH, OSB ...') + '"></td>' +
       '<td class="' + (layer.autoFilled?.properties ? 'cell-auto' : '') + '"><input type="text" data-field="properties" data-idx="' + idx + '" value="' + esc(layer.properties) + '" placeholder="DIN ..."></td>' +
       '<td class="' + (layer.autoFilled?.dimension ? 'cell-auto' : '') + '"><input type="text" data-field="dimension" data-idx="' + idx + '" value="' + esc(layer.dimension) + '" placeholder="z.B. 60/160"></td>' +
-      '<td><input type="text" data-field="spacing" data-idx="' + idx + '" value="' + esc(layer.spacing) + '" placeholder="z.B. 625"></td>' +
+      '<td class="' + (layer.autoFilled?.spacing ? 'cell-auto' : '') + '"><input type="text" data-field="spacing" data-idx="' + idx + '" value="' + esc(layer.spacing) + '" placeholder="z.B. 625"></td>' +
       '<td class="col-checkbox' + (layer.autoFilled?.w ? ' cell-auto' : '') + '"><input type="checkbox" data-field="w" data-idx="' + idx + '" ' + (layer.w ? 'checked' : '') + '></td>' +
       '<td class="col-checkbox"><input type="checkbox" data-field="b" data-idx="' + idx + '" ' + (layer.b ? 'checked' : '') + '></td>' +
       '<td class="col-checkbox"><input type="checkbox" data-field="f" data-idx="' + idx + '" ' + (layer.f ? 'checked' : '') + '></td>' +
       '<td class="col-checkbox' + (layer.autoFilled?.wpk ? ' cell-auto' : '') + '"><input type="checkbox" data-field="wpk" data-idx="' + idx + '" ' + (layer.wpk ? 'checked' : '') + '></td>' +
-      '<td class="col-actions"><button class="del-btn" onclick="removeLayer(' + idx + ')" title="Entfernen">×</button></td>';
+      '<td class="col-actions" style="white-space:nowrap;">' + moveBtns + '<button class="del-btn" onclick="removeLayer(' + idx + ')" title="Entfernen">×</button></td>';
     tbody.appendChild(tr);
+
+    // Pseudo-Zeile mit "+ Dämmung"-Button nach Ende eines Riegelwerk-Blocks
+    const isLastInBlock = !layer.isInsulation
+      ? (idx + 1 >= state.layers.length || !state.layers[idx + 1].isInsulation)
+      : (idx + 1 >= state.layers.length || !state.layers[idx + 1].isInsulation);
+    if (isLastInBlock) {
+      // Suche zugehörige Riegelwerk-Schicht (entweder die aktuelle oder weiter oben)
+      let parentIdx = idx;
+      while (parentIdx >= 0 && state.layers[parentIdx].isInsulation) parentIdx--;
+      if (parentIdx >= 0 && isStructureLayer(state.layers[parentIdx].product)) {
+        const parentMainNum = (() => {
+          let m = 0;
+          for (let i = 0; i <= parentIdx; i++) if (!state.layers[i].isInsulation) m++;
+          return m;
+        })();
+        const nextSubNum = (subNum || 0) + 1;
+        const tr2 = document.createElement('tr');
+        tr2.className = 'sub-add-row';
+        tr2.innerHTML = '<td colspan="10"><button class="sub-add-btn" onclick="addInsulationLayer(' + parentIdx + ')">↳ + Dämmung als ' + parentMainNum + '.' + nextSubNum + ' hinzufügen</button></td>';
+        tbody.appendChild(tr2);
+      }
+    }
   });
   bindLayerInputs();
   renderStats();
   renderVisualization();
+  refreshAllFastenerWarnings();
 }
 
 function bindLayerInputs() {
@@ -1655,6 +2045,15 @@ function bindLayerInputs() {
               dimInput.closest('td')?.classList.add('cell-auto');
             }
           }
+          if (!layer.spacing && m.defaultSpacing) {
+            layer.spacing = m.defaultSpacing;
+            layer.autoFilled.spacing = true;
+            const spacingInput = row?.querySelector('input[data-field="spacing"]');
+            if (spacingInput) {
+              spacingInput.value = m.defaultSpacing;
+              spacingInput.closest('td')?.classList.add('cell-auto');
+            }
+          }
         }
       }
       renderStats();
@@ -1687,6 +2086,10 @@ function bindLayerInputs() {
         if (sel.data.defaultDim && !state.layers[idx].dimension) {
           state.layers[idx].dimension = sel.data.defaultDim;
           state.layers[idx].autoFilled.dimension = true;
+        }
+        if (sel.data.defaultSpacing && !state.layers[idx].spacing) {
+          state.layers[idx].spacing = sel.data.defaultSpacing;
+          state.layers[idx].autoFilled.spacing = true;
         }
         renderLayers();
       });
@@ -1908,7 +2311,132 @@ function addLayer() {
   });
   renderLayers();
 }
-function removeLayer(idx) { state.layers.splice(idx, 1); renderLayers(); }
+
+// Fügt eine Dämmung als Sub-Schicht direkt nach einer Riegelwerk-Schicht ein.
+// Übernimmt die Schichtdicke des Riegelwerks als Default-Dimension.
+function addInsulationLayer(parentIdx) {
+  const parent = state.layers[parentIdx];
+  if (!parent || !isStructureLayer(parent.product)) return;
+  // Schichtdicke des Riegelwerks ermitteln (z.B. KVH 60/200 → 200)
+  let dimension = '';
+  if (parent.dimension) {
+    const parsed = parseDim(parent.dimension);
+    if (parsed) {
+      dimension = String(getLayerThickness(parsed, parent.product, parent.swapDim));
+    }
+  }
+  // An die letzte vorhandene Sub-Dämmung hinten anhängen
+  let insertIdx = parentIdx + 1;
+  while (insertIdx < state.layers.length && state.layers[insertIdx].isInsulation) {
+    insertIdx++;
+  }
+  state.layers.splice(insertIdx, 0, {
+    product: '', properties: '', dimension, spacing: '',
+    w: true, b: false, f: false, wpk: true,
+    autoFilled: { w: true, wpk: true, dimension: !!dimension },
+    isInsulation: true
+  });
+  renderLayers();
+}
+
+// Beim Löschen einer Riegelwerk-Schicht: alle direkt folgenden Sub-Dämmungen mitlöschen
+function removeLayer(idx) {
+  let toRemove = 1;
+  while (idx + toRemove < state.layers.length && state.layers[idx + toRemove].isInsulation) {
+    toRemove++;
+  }
+  // Bei den Verbindungsmitteln den Verweis auf gelöschte/verschobene Schichten aktualisieren
+  withFastenerSync(() => state.layers.splice(idx, toRemove));
+  renderLayers();
+  renderFasteners();
+}
+
+// Verschiebt eine Schicht nach oben.
+// — Hauptschicht: Block (mit allen Sub-Schichten) tauscht mit vorherigem Block
+// — Sub-Schicht: tauscht mit vorheriger Sub-Schicht im gleichen Block
+function moveLayerUp(idx) {
+  const layer = state.layers[idx];
+  if (!layer) return;
+  withFastenerSync(() => {
+    if (layer.isInsulation) {
+      if (idx > 0 && state.layers[idx - 1].isInsulation) {
+        [state.layers[idx], state.layers[idx - 1]] = [state.layers[idx - 1], state.layers[idx]];
+      }
+      return;
+    }
+    // Vorherige Hauptschicht finden
+    let prevMainIdx = idx - 1;
+    while (prevMainIdx >= 0 && state.layers[prevMainIdx].isInsulation) prevMainIdx--;
+    if (prevMainIdx < 0) return;
+    // Aktuellen Block extrahieren (Hauptschicht + ihre Sub-Schichten)
+    let blockSize = 1;
+    while (idx + blockSize < state.layers.length && state.layers[idx + blockSize].isInsulation) blockSize++;
+    const currentBlock = state.layers.splice(idx, blockSize);
+    state.layers.splice(prevMainIdx, 0, ...currentBlock);
+  });
+  renderLayers();
+  renderFasteners();
+}
+
+function moveLayerDown(idx) {
+  const layer = state.layers[idx];
+  if (!layer) return;
+  withFastenerSync(() => {
+    if (layer.isInsulation) {
+      if (idx + 1 < state.layers.length && state.layers[idx + 1].isInsulation) {
+        [state.layers[idx], state.layers[idx + 1]] = [state.layers[idx + 1], state.layers[idx]];
+      }
+      return;
+    }
+    // Aktuellen Block bestimmen
+    let blockSize = 1;
+    while (idx + blockSize < state.layers.length && state.layers[idx + blockSize].isInsulation) blockSize++;
+    const nextStart = idx + blockSize;
+    if (nextStart >= state.layers.length) return;
+    // Nächsten Block bestimmen
+    let nextBlockSize = 1;
+    while (nextStart + nextBlockSize < state.layers.length && state.layers[nextStart + nextBlockSize].isInsulation) nextBlockSize++;
+    // Aktuellen Block hinter nächsten verschieben
+    const currentBlock = state.layers.splice(idx, blockSize);
+    state.layers.splice(idx + nextBlockSize, 0, ...currentBlock);
+  });
+  renderLayers();
+  renderFasteners();
+}
+
+// Wrapper: führt eine Schicht-Umordnung aus und aktualisiert die "Zu"-Zuordnung
+// in den Verbindungsmitteln auf die neuen Display-Hauptnummern.
+function withFastenerSync(mutator) {
+  // 1. Vor der Mutation: für jede Hauptschicht die aktuelle Display-Nr merken
+  const layerToOldNum = new Map();
+  let mn = 0;
+  state.layers.forEach(l => {
+    if (!l.isInsulation) { mn++; layerToOldNum.set(l, mn); }
+  });
+  // 2. Mutation ausführen
+  mutator();
+  // 3. Neue Display-Nr je Hauptschicht
+  const layerToNewNum = new Map();
+  mn = 0;
+  state.layers.forEach(l => {
+    if (!l.isInsulation) { mn++; layerToNewNum.set(l, mn); }
+  });
+  // 4. Verbindungsmittel: "Zu"-Feld umschreiben
+  state.fasteners.forEach(f => {
+    const toNum = parseInt(String(f.to || '').trim(), 10);
+    if (isNaN(toNum)) return;
+    // Schicht finden, die VOR der Mutation diese Display-Nr hatte
+    let referenced = null;
+    for (const [layer, num] of layerToOldNum) {
+      if (num === toNum) { referenced = layer; break; }
+    }
+    if (!referenced) return;
+    // Wenn die Schicht noch existiert: neue Display-Nr setzen
+    const newNum = layerToNewNum.get(referenced);
+    if (newNum != null) f.to = String(newNum);
+    else f.to = ''; // Schicht wurde gelöscht
+  });
+}
 
 function addFastener() {
   state.fasteners.push({
@@ -1997,6 +2525,7 @@ function resetEditor() {
 function exportHtml() {
   const html = generateExportHtml();
   downloadBlob(html, 'text/html;charset=utf-8', buildFilename('html'));
+  saveHeaderHistory();
   setStage(3);
   showToast('HTML-Export gespeichert.', 'success');
 }
@@ -2010,12 +2539,14 @@ function printDocument() {
   // beim "Als PDF speichern"-Dialog vorschlägt
   w.document.title = buildFilename('').replace(/\.$/, '');
   setTimeout(() => w.print(), 500);
+  saveHeaderHistory();
   setStage(3);
 }
 
 function downloadJson() {
   const data = JSON.stringify(state, null, 2);
   downloadBlob(data, 'application/json', buildFilename('json'));
+  saveHeaderHistory();
   showToast('JSON-Backup gespeichert.', 'success');
 }
 
@@ -2046,19 +2577,31 @@ function generateExportHtml() {
   const vizSvgEl = document.querySelector('#vizContainer svg');
   const vizSvg = vizSvgEl ? vizSvgEl.outerHTML : '';
 
-  const layersRows = state.layers.map((l, i) =>
-    '<tr>' +
-    '<td style="text-align:center">' + (i+1) + '</td>' +
-    '<td>' + esc(l.product) + '</td>' +
-    '<td>' + esc(l.properties) + '</td>' +
-    '<td style="text-align:center">' + esc(l.dimension) + '</td>' +
-    '<td style="text-align:center">' + esc(l.spacing) + '</td>' +
-    '<td style="text-align:center">' + (l.w ? '✓' : '') + '</td>' +
-    '<td style="text-align:center">' + (l.b ? '✓' : '') + '</td>' +
-    '<td style="text-align:center">' + (l.f ? '✓' : '') + '</td>' +
-    '<td style="text-align:center">' + (l.wpk ? '✓' : '') + '</td>' +
-    '</tr>'
-  ).join('');
+  // Display-Nummern für Export (1, 2, 2.1, 3, ...)
+  let _mainNum = 0, _subNum = 0;
+  const layersRows = state.layers.map(l => {
+    let displayNum;
+    if (l.isInsulation) {
+      _subNum++;
+      displayNum = _mainNum + '.' + _subNum;
+    } else {
+      _mainNum++;
+      _subNum = 0;
+      displayNum = String(_mainNum);
+    }
+    const productCell = l.isInsulation ? '↳ ' + esc(l.product) : esc(l.product);
+    return '<tr>' +
+      '<td style="text-align:center">' + displayNum + '</td>' +
+      '<td>' + productCell + '</td>' +
+      '<td>' + esc(l.properties) + '</td>' +
+      '<td style="text-align:center">' + esc(l.dimension) + '</td>' +
+      '<td style="text-align:center">' + esc(l.spacing) + '</td>' +
+      '<td style="text-align:center">' + (l.w ? '✓' : '') + '</td>' +
+      '<td style="text-align:center">' + (l.b ? '✓' : '') + '</td>' +
+      '<td style="text-align:center">' + (l.f ? '✓' : '') + '</td>' +
+      '<td style="text-align:center">' + (l.wpk ? '✓' : '') + '</td>' +
+      '</tr>';
+  }).join('');
 
   const fastenersRows = state.fasteners.map(f =>
     '<tr>' +
@@ -2385,6 +2928,8 @@ window.addEventListener('DOMContentLoaded', () => {
   bindHeaderInputs();
   renderMaterialsDb();
   renderFastenersDb();
+  refreshHeaderDatalists();
+  setupKeyboardShortcuts();
 });
 </script>
 
