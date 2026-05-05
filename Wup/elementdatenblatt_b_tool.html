@@ -364,6 +364,47 @@ body {
   letter-spacing: 0.05em;
   pointer-events: none;
 }
+/* Kompakter "A"-Punkt für die schmalen Checkbox-Zellen */
+.col-checkbox.cell-auto::after {
+  content: "A";
+  width: 12px; height: 12px;
+  line-height: 12px;
+  font-size: 0.55rem;
+  padding: 0;
+  border-radius: 50%;
+  top: 2px; right: 2px;
+  background: var(--yellow);
+  color: var(--bg);
+  text-align: center;
+  letter-spacing: 0;
+}
+
+/* WARNUNG-Badge: rote Markierung, wenn Klammer zu kurz für die Materialdicke */
+.cell-warning { position: relative; }
+.cell-warning input[type="text"] {
+  border-color: var(--red) !important;
+  background: var(--red-dim) !important;
+  color: var(--red);
+}
+.cell-warning input[type="text"]:focus {
+  background: var(--bg) !important;
+  color: var(--text);
+}
+.cell-warning::after {
+  content: "⚠";
+  position: absolute;
+  top: 4px; right: 6px;
+  background: var(--red);
+  color: #fff;
+  font-size: 0.7rem;
+  width: 14px; height: 14px;
+  line-height: 14px;
+  text-align: center;
+  border-radius: 50%;
+  font-weight: 700;
+  pointer-events: none;
+  z-index: 1;
+}
 
 /* FEHLT-Badge: orange Kennzeichnung für ungefüllte Pflichtfelder (Klammerabstand) */
 .cell-required { position: relative; }
@@ -893,24 +934,52 @@ const DEFAULT_MATERIALS = [
 ];
 
 const DEFAULT_FASTENERS = [
-  // === HAUBOLD-KLAMMERN (ITW) ===
-  { keywords: ['Heftklammer KG', 'Klammer KG', 'KG 750', 'KLAMMERN KG'], name: 'Haubold Klammer KG 750 EG12', mfgNo: 'ITW 574943', dimension: '1,53 x 50', defaultSpacing: '100' },
-  { keywords: ['Heftklammer HD 7950', 'Klammer HD 7950', 'HD 7950'], name: 'Haubold Klammer HD 7950 EG12', mfgNo: 'ITW 503397', dimension: '1,8 x 50', defaultSpacing: '150' },
-  { keywords: ['Heftklammer HD 7975', 'Klammer HD 7975', 'HD 7975', 'Heftklammer HD'], name: 'Haubold Klammer HD 7975 EG12', mfgNo: 'ITW 503402', dimension: '1,8 x 75', defaultSpacing: '150' },
-  { keywords: ['Klammer BS', 'BS 29110', 'KLAMMERN BS'], name: 'Haubold Klammer BS 29110 A2', mfgNo: 'ITW 503609', dimension: '2,0 x 110', defaultSpacing: '150' },
-  { keywords: ['Klammer ETA', 'Klammer ETA-16', 'ETA-16/0535'], name: 'Klammer (ETA-16/0535)', mfgNo: 'ETA-16/0535', dimension: '1,8 x 75', defaultSpacing: '145' },
-  { keywords: ['Klammer', 'Klammern'], name: 'Klammer (allgemein)', mfgNo: 'siehe Spezifikation', dimension: '', defaultSpacing: '' },
+  // === KLAMMERN (Schreibweise: Drahtdicke × Länge, Drahtdicke nur erste Zahl) ===
+  // KG50 — kleine Klammer für dünne Platten (OSB, Fermacell, DWD bis ~25 mm)
+  { keywords: ['KG50', 'Heftklammer KG', 'Klammer KG', 'KG 750'],
+    name: 'BeA Klammer KG50 VZ HZ', mfgNo: 'BeA · ITW 574943',
+    dimension: '1,5 x 50', defaultSpacing: '100', maxMaterialThickness: 25 },
 
-  // === HAUBOLD-NÄGEL (ITW) ===
-  { keywords: ['CW 3.1', 'CW 3,1', 'NÄGEL CW', 'Nagel 3,1 x 90', 'Nagel 3.1x90'], name: 'Haubold Nagel CW 3,1 x 90 RS EG12', mfgNo: 'ITW 504604', dimension: '3,1 x 90', defaultSpacing: '100' },
-  { keywords: ['Wellennagel', 'WELLENNÄGEL', 'WN25'], name: 'Haubold Wellennagel WN25', mfgNo: 'ITW 504349', dimension: '25 x 35', defaultSpacing: '' },
+  // HD7900 — mittlere Klammer (z.B. 2× OSB 18 mm)
+  { keywords: ['HD7900', 'HD 7900', 'Heftklammer HD', 'HD 7975', 'HD7975'],
+    name: 'Haubold Klammer HD7900 1,80×75', mfgNo: 'ITW 503402 (Haubold)',
+    dimension: '1,8 x 75', defaultSpacing: '150', maxMaterialThickness: 40 },
 
-  // === PASLODE-NÄGEL (ITW) ===
-  { keywords: ['PL 3.8', 'PL 3,8', 'Paslode 3.8', 'Nagel 3,8 x 130'], name: 'Paslode Nagel PL 3,8 x 130', mfgNo: 'ITW 140547', dimension: '3,8 x 130', defaultSpacing: '' },
-  { keywords: ['PL 4.6', 'PL 4,6', 'Paslode 4.6', 'Nagel 4,6 x 160'], name: 'Paslode Nagel PL 4,6 x 160', mfgNo: 'ITW 140558', dimension: '4,6 x 160', defaultSpacing: '' },
+  // BS-Reihe — für Holzfaserdämmung (Größe gemäß Schichtdicke wählen!)
+  { keywords: ['BS75', 'BS/75', 'BS 75'],
+    name: 'BeA Klammer BS/75 RF-A2 HZ', mfgNo: 'BeA',
+    dimension: '2,2 x 75', defaultSpacing: '150', maxMaterialThickness: 40 },
+  { keywords: ['BS100', 'BS/100', 'BS 100'],
+    name: 'BeA Klammer BS/100 RF-A2 HZ', mfgNo: 'BeA',
+    dimension: '2,2 x 100', defaultSpacing: '150', maxMaterialThickness: 60 },
+  { keywords: ['BS110', 'BS29000 110', 'BS 29110', 'Klammer BS'],
+    name: 'Haubold Klammer BS29000 2,0×110', mfgNo: 'ITW 503609 (Haubold)',
+    dimension: '2,0 x 110', defaultSpacing: '150', maxMaterialThickness: 60 },
+  { keywords: ['BS130', 'BS29000 130', 'BS 130'],
+    name: 'Haubold Klammer BS29000 2,0×130', mfgNo: 'Haubold',
+    dimension: '2,0 x 130', defaultSpacing: '150', maxMaterialThickness: 100 },
 
-  // === Generischer Fallback ===
-  { keywords: ['Nagel', 'Nägel'], name: 'Nagel (allgemein)', mfgNo: 'siehe Spezifikation', dimension: '', defaultSpacing: '' }
+  // Generische Klammer (Fallback)
+  { keywords: ['Klammer', 'Klammern'],
+    name: 'Klammer (allgemein)', mfgNo: 'siehe Spezifikation',
+    dimension: '', defaultSpacing: '' },
+
+  // === NÄGEL ===
+  { keywords: ['CW 3,1', 'CW 3.1', 'Nagel 3,1', 'NÄGEL CW'],
+    name: 'Haubold Nagel CW 3,1 x 90 RS EG12', mfgNo: 'ITW 504604 (Haubold)',
+    dimension: '3,1 x 90', defaultSpacing: '100' },
+  { keywords: ['Wellennagel', 'WN25', 'WELLENNÄGEL'],
+    name: 'Haubold Wellennagel WN25', mfgNo: 'ITW 504349 (Haubold)',
+    dimension: '25 x 35', defaultSpacing: '' },
+  { keywords: ['PL 3,8', 'PL 3.8', 'Paslode 3,8', 'Nagel 3,8'],
+    name: 'Paslode Nagel PL 3,8 x 130', mfgNo: 'ITW 140547 (Paslode)',
+    dimension: '3,8 x 130', defaultSpacing: '' },
+  { keywords: ['PL 4,6', 'PL 4.6', 'Paslode 4,6', 'Nagel 4,6'],
+    name: 'Paslode Nagel PL 4,6 x 160', mfgNo: 'ITW 140558 (Paslode)',
+    dimension: '4,6 x 160', defaultSpacing: '' },
+  { keywords: ['Nagel', 'Nägel'],
+    name: 'Nagel (allgemein)', mfgNo: 'siehe Spezifikation',
+    dimension: '', defaultSpacing: '' }
 ];
 
 /* ============================================================
@@ -1089,8 +1158,8 @@ function extractLayers(tbl) {
       properties: (colMap.props !== undefined ? row[colMap.props] : '').trim(),
       dimension: cleanNumeric(colMap.dim !== undefined ? row[colMap.dim] : ''),
       spacing: cleanNumeric(colMap.spacing !== undefined ? row[colMap.spacing] : ''),
-      w: false, b: false, f: false, wpk: false,
-      autoFilled: {}
+      w: true, b: false, f: false, wpk: true,
+      autoFilled: { w: true, wpk: true }
     });
   }
   return layers;
@@ -1128,8 +1197,8 @@ function extractFasteners(tbl) {
       properties: (colMap.props !== undefined ? row[colMap.props] : '').trim(),
       dimension: cleanNumeric(colMap.dim !== undefined ? row[colMap.dim] : ''),
       spacing: cleanNumeric(colMap.spacing !== undefined ? row[colMap.spacing] : ''),
-      wpk: false,
-      autoFilled: {}
+      wpk: true,
+      autoFilled: { wpk: true }
     });
   }
   return fasteners;
@@ -1201,7 +1270,8 @@ function autoCreateMissingFasteners() {
     if (existing.has(layerNum)) return;
     state.fasteners.push({
       to: layerNum, type: '', properties: '', dimension: '', spacing: '',
-      wpk: false, autoFilled: {}
+      wpk: true,
+      autoFilled: { wpk: true }
     });
     existing.add(layerNum);
     added++;
@@ -1217,6 +1287,33 @@ function autoCreateMissingFastenersUI() {
   }
   renderFasteners();
   showToast('✓ ' + added + ' fehlende Verbindungsmittel angelegt.', 'success');
+}
+
+// Liefert die Schichtdicke der vom Verbindungsmittel referenzierten Schicht (über `to`)
+// — null falls Schicht nicht gefunden oder Dimension nicht parsebar.
+function getMaterialThicknessForFastener(fastener) {
+  if (!fastener.to) return null;
+  const toNum = parseInt(String(fastener.to).trim(), 10);
+  if (isNaN(toNum) || toNum < 1 || toNum > state.layers.length) return null;
+  const layer = state.layers[toNum - 1];
+  if (!layer || !layer.dimension) return null;
+  const parsed = parseDim(layer.dimension);
+  if (!parsed) return null;
+  return getLayerThickness(parsed, layer.product, layer.swapDim);
+}
+
+// Prüft, ob die Klammer dick genug ist für die referenzierte Schichtdicke.
+// Regel: längere Klammer kann auch in dünneres Material — aber nicht andersherum.
+// Gibt eine Warnungs-Nachricht zurück oder null wenn alles passt / unklar.
+function checkFastenerFitsMaterial(fastener) {
+  const m = findFastenerMatch(fastener.type);
+  if (!m || m.maxMaterialThickness == null) return null;
+  const mat = getMaterialThicknessForFastener(fastener);
+  if (mat == null) return null;
+  if (mat > m.maxMaterialThickness) {
+    return 'Klammer zu kurz: max. ' + m.maxMaterialThickness + ' mm Material, hier ' + mat + ' mm';
+  }
+  return null;
 }
 
 /* ============================================================
@@ -1409,6 +1506,7 @@ function toggleSwapDim(idx) {
   if (!state.layers[idx]) return;
   state.layers[idx].swapDim = !state.layers[idx].swapDim;
   renderVisualization();
+  refreshAllFastenerWarnings();
 }
 
 /* ============================================================
@@ -1496,10 +1594,10 @@ function renderLayers() {
       '<td class="' + (layer.autoFilled?.properties ? 'cell-auto' : '') + '"><input type="text" data-field="properties" data-idx="' + idx + '" value="' + esc(layer.properties) + '" placeholder="DIN ..."></td>' +
       '<td class="' + (layer.autoFilled?.dimension ? 'cell-auto' : '') + '"><input type="text" data-field="dimension" data-idx="' + idx + '" value="' + esc(layer.dimension) + '" placeholder="z.B. 60/160"></td>' +
       '<td><input type="text" data-field="spacing" data-idx="' + idx + '" value="' + esc(layer.spacing) + '" placeholder="z.B. 625"></td>' +
-      '<td class="col-checkbox"><input type="checkbox" data-field="w" data-idx="' + idx + '" ' + (layer.w ? 'checked' : '') + '></td>' +
+      '<td class="col-checkbox' + (layer.autoFilled?.w ? ' cell-auto' : '') + '"><input type="checkbox" data-field="w" data-idx="' + idx + '" ' + (layer.w ? 'checked' : '') + '></td>' +
       '<td class="col-checkbox"><input type="checkbox" data-field="b" data-idx="' + idx + '" ' + (layer.b ? 'checked' : '') + '></td>' +
       '<td class="col-checkbox"><input type="checkbox" data-field="f" data-idx="' + idx + '" ' + (layer.f ? 'checked' : '') + '></td>' +
-      '<td class="col-checkbox"><input type="checkbox" data-field="wpk" data-idx="' + idx + '" ' + (layer.wpk ? 'checked' : '') + '></td>' +
+      '<td class="col-checkbox' + (layer.autoFilled?.wpk ? ' cell-auto' : '') + '"><input type="checkbox" data-field="wpk" data-idx="' + idx + '" ' + (layer.wpk ? 'checked' : '') + '></td>' +
       '<td class="col-actions"><button class="del-btn" onclick="removeLayer(' + idx + ')" title="Entfernen">×</button></td>';
     tbody.appendChild(tr);
   });
@@ -1516,6 +1614,11 @@ function bindLayerInputs() {
     if (input.type === 'checkbox') {
       input.addEventListener('change', () => {
         state.layers[idx][field] = input.checked;
+        // Manueller Klick: AUTO-Hinweis entfernen
+        if (state.layers[idx].autoFilled?.[field]) {
+          state.layers[idx].autoFilled[field] = false;
+          input.closest('td')?.classList.remove('cell-auto');
+        }
         renderVisualization();
       });
       return;
@@ -1556,6 +1659,10 @@ function bindLayerInputs() {
       }
       renderStats();
       renderVisualization();
+      // Bei Änderung von Dimension oder Bauprodukt: alle Klammer-Warnungen neu prüfen
+      if (field === 'dimension' || field === 'product') {
+        refreshAllFastenerWarnings();
+      }
     });
     if (input.classList.contains('autocomplete-material')) {
       attachPortalSuggestions(input, () => {
@@ -1601,14 +1708,18 @@ function renderFasteners() {
     const spacingPlaceholder = spacingIsRequired
       ? (spacingHint ? 'Pflicht – z.B. ' + spacingHint : 'Pflicht')
       : 'mm';
+    // Klammer-zu-Materialdicke-Validierung
+    const warning = checkFastenerFitsMaterial(f);
+    const dimClass = (warning ? 'cell-warning' : (f.autoFilled?.dimension ? 'cell-auto' : ''));
+    const dimTitle = warning ? ' title="' + esc(warning) + '"' : '';
     const tr = document.createElement('tr');
     tr.innerHTML =
       '<td><input type="text" data-field="to" data-idx="' + idx + '" value="' + esc(f.to) + '" placeholder="Nr."></td>' +
-      '<td><input type="text" class="autocomplete-fastener" data-field="type" data-idx="' + idx + '" value="' + esc(f.type) + '" placeholder="z.B. Klammer, Nagel ..."></td>' +
+      '<td><input type="text" class="autocomplete-fastener" data-field="type" data-idx="' + idx + '" value="' + esc(f.type) + '" placeholder="z.B. Klammer, Nagel ..."' + dimTitle + '></td>' +
       '<td class="' + (f.autoFilled?.properties ? 'cell-auto' : '') + '"><input type="text" data-field="properties" data-idx="' + idx + '" value="' + esc(f.properties) + '" placeholder="Hersteller-Nr."></td>' +
-      '<td class="' + (f.autoFilled?.dimension ? 'cell-auto' : '') + '"><input type="text" data-field="dimension" data-idx="' + idx + '" value="' + esc(f.dimension) + '" placeholder="z.B. 1,8 x 75"></td>' +
+      '<td class="' + dimClass + '"><input type="text" data-field="dimension" data-idx="' + idx + '" value="' + esc(f.dimension) + '" placeholder="z.B. 1,8 x 75"' + dimTitle + '></td>' +
       '<td class="' + spacingClass + '"><input type="text" data-field="spacing" data-idx="' + idx + '" value="' + esc(f.spacing) + '" placeholder="' + spacingPlaceholder + '"></td>' +
-      '<td class="col-checkbox"><input type="checkbox" data-field="wpk" data-idx="' + idx + '" ' + (f.wpk ? 'checked' : '') + '></td>' +
+      '<td class="col-checkbox' + (f.autoFilled?.wpk ? ' cell-auto' : '') + '"><input type="checkbox" data-field="wpk" data-idx="' + idx + '" ' + (f.wpk ? 'checked' : '') + '></td>' +
       '<td class="col-actions"><button class="del-btn" onclick="removeFastener(' + idx + ')" title="Entfernen">×</button></td>';
     tbody.appendChild(tr);
   });
@@ -1622,7 +1733,13 @@ function bindFastenerInputs() {
     const field = input.dataset.field;
     const idx = parseInt(input.dataset.idx, 10);
     if (input.type === 'checkbox') {
-      input.addEventListener('change', () => { state.fasteners[idx][field] = input.checked; });
+      input.addEventListener('change', () => {
+        state.fasteners[idx][field] = input.checked;
+        if (state.fasteners[idx].autoFilled?.[field]) {
+          state.fasteners[idx].autoFilled[field] = false;
+          input.closest('td')?.classList.remove('cell-auto');
+        }
+      });
       return;
     }
     input.addEventListener('input', () => {
@@ -1657,8 +1774,11 @@ function bindFastenerInputs() {
           }
         }
         updateSpacingRequiredCell(idx, row);
+        updateFastenerWarningCell(idx, row);
       } else if (field === 'spacing') {
         updateSpacingRequiredCell(idx, row);
+      } else if (field === 'to') {
+        updateFastenerWarningCell(idx, row);
       }
       renderStats();
     });
@@ -1705,6 +1825,35 @@ function updateSpacingRequiredCell(idx, row) {
   } else {
     spacingInput.placeholder = 'mm';
   }
+}
+
+// Aktualisiert die rote Klammer-zu-kurz-Warnung für eine Verbindungs-Zeile
+function updateFastenerWarningCell(idx, row) {
+  if (!row) return;
+  const dimInput = row.querySelector('input[data-field="dimension"]');
+  const typeInput = row.querySelector('input[data-field="type"]');
+  if (!dimInput) return;
+  const td = dimInput.closest('td');
+  if (!td) return;
+  const f = state.fasteners[idx];
+  const warning = checkFastenerFitsMaterial(f);
+  if (warning) {
+    td.classList.add('cell-warning');
+    td.classList.remove('cell-auto'); // Warnung übertrumpft AUTO-Badge
+    dimInput.title = warning;
+    if (typeInput) typeInput.title = warning;
+  } else {
+    td.classList.remove('cell-warning');
+    if (f.autoFilled?.dimension) td.classList.add('cell-auto');
+    dimInput.title = '';
+    if (typeInput) typeInput.title = '';
+  }
+}
+
+// Alle Verbindungs-Warnungen aktualisieren (z.B. nach Schicht-Änderung)
+function refreshAllFastenerWarnings() {
+  const rows = document.querySelectorAll('#fastenersBody tr');
+  state.fasteners.forEach((f, fIdx) => updateFastenerWarningCell(fIdx, rows[fIdx]));
 }
 
 /* ============================================================
@@ -1754,7 +1903,8 @@ function renderStats() {
 function addLayer() {
   state.layers.push({
     product: '', properties: '', dimension: '', spacing: '',
-    w: false, b: false, f: false, wpk: false, autoFilled: {}
+    w: true, b: false, f: false, wpk: true,
+    autoFilled: { w: true, wpk: true }
   });
   renderLayers();
 }
@@ -1763,7 +1913,8 @@ function removeLayer(idx) { state.layers.splice(idx, 1); renderLayers(); }
 function addFastener() {
   state.fasteners.push({
     to: '', type: '', properties: '', dimension: '', spacing: '',
-    wpk: false, autoFilled: {}
+    wpk: true,
+    autoFilled: { wpk: true }
   });
   renderFasteners();
 }
