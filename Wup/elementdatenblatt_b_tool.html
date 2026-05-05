@@ -1,0 +1,2228 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Elementdatenblatt B – Tool</title>
+<style>
+/* ============================================================
+   THEME — Design Tokens
+   ============================================================ */
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #242837;
+  --surface3: #2e3345;
+  --border: #353a4f;
+  --border-active: #5b6abf;
+  --text: #e8eaf0;
+  --text-dim: #8b90a5;
+  --text-muted: #5d6178;
+  --accent: #6c7ae0;
+  --accent-hover: #7d8ae8;
+  --accent-glow: rgba(108, 122, 224, 0.15);
+  --green: #4ade80;
+  --green-dim: rgba(74, 222, 128, 0.12);
+  --red: #f87171;
+  --red-dim: rgba(248, 113, 113, 0.12);
+  --orange: #fb923c;
+  --orange-dim: rgba(251, 146, 60, 0.12);
+  --yellow: #fbbf24;
+  --yellow-dim: rgba(251, 191, 36, 0.12);
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   APP HEADER + TABS
+   ============================================================ */
+.app-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.app-header h1 { font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; }
+.app-header .logo {
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.85rem; color: #fff;
+  flex-shrink: 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 3px;
+}
+.tab-btn {
+  padding: 8px 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active {
+  background: var(--surface2);
+  color: var(--text);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.tab-btn .tab-count {
+  background: var(--surface3);
+  color: var(--text-dim);
+  padding: 1px 6px;
+  border-radius: 99px;
+  font-size: 0.7rem;
+  margin-left: 6px;
+}
+.tab-btn.active .tab-count { background: var(--accent); color: #fff; }
+
+.main { max-width: 1400px; margin: 0 auto; padding: 24px 32px; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ============================================================
+   STAGE BAR
+   ============================================================ */
+.stage-bar { display: flex; gap: 8px; margin-bottom: 20px; font-size: 0.8rem; }
+.stage-pill {
+  padding: 6px 14px;
+  border-radius: 99px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  display: flex; align-items: center; gap: 6px;
+}
+.stage-pill .step-num {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--surface2);
+  color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 700;
+}
+.stage-pill.active { border-color: var(--accent); color: var(--text); background: var(--accent-glow); }
+.stage-pill.active .step-num { background: var(--accent); color: #fff; }
+.stage-pill.done { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+.stage-pill.done .step-num { background: var(--green); color: var(--bg); }
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.card-title .badge {
+  background: var(--accent-glow);
+  color: var(--accent);
+  padding: 2px 10px;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.card-title .badge.green { background: var(--green-dim); color: var(--green); }
+.card-title .badge.orange { background: var(--orange-dim); color: var(--orange); }
+.card-title .badge.muted { background: var(--surface3); color: var(--text-dim); }
+
+/* ============================================================
+   UPLOAD / DROP ZONE
+   ============================================================ */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 40px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s;
+  display: block;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+.upload-zone input { display: none; }
+.upload-zone .icon { font-size: 2rem; margin-bottom: 8px; opacity: 0.6; }
+.upload-zone p { color: var(--text-dim); font-size: 0.9rem; }
+.upload-zone .hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--surface3); border-color: var(--border-active); }
+.btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+
+.add-row {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.add-row:hover { border-color: var(--accent); color: var(--accent); border-style: solid; }
+
+.del-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  width: 28px; height: 28px;
+  border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; line-height: 1;
+}
+.del-btn:hover { background: var(--red-dim); color: var(--red); border-color: var(--red); }
+
+/* ============================================================
+   STATS
+   ============================================================ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+}
+.stat-card .number {
+  font-size: 1.8rem; font-weight: 700; line-height: 1.2;
+  color: var(--text);
+}
+.stat-card .label {
+  font-size: 0.8rem; color: var(--text-dim);
+  margin-top: 4px;
+}
+.stat-card.warn .number { color: var(--orange); }
+.stat-card.good .number { color: var(--green); }
+.stat-card.info .number { color: var(--accent); }
+
+/* ============================================================
+   HEADER FORM
+   ============================================================ */
+.header-form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 20px;
+}
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+.field input, .field select, .field textarea {
+  padding: 8px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--bg);
+}
+
+/* ============================================================
+   EDITABLE TABLES
+   ============================================================ */
+.editor-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.editor-table thead { background: var(--surface2); }
+.editor-table th {
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+.editor-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.editor-table tr:last-child td { border-bottom: none; }
+.editor-table tr:hover td { background: var(--surface2); }
+.editor-table input[type="text"],
+.editor-table textarea {
+  width: 100%;
+  padding: 6px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.85rem;
+  resize: vertical;
+}
+.editor-table input[type="text"]:hover,
+.editor-table textarea:hover { border-color: var(--border); }
+.editor-table input[type="text"]:focus,
+.editor-table textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--bg);
+}
+.editor-table input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; }
+
+.col-narrow { width: 80px; }
+.col-checkbox { width: 50px; text-align: center; }
+.col-actions { width: 50px; text-align: center; }
+
+/* AUTO-Badge: gelbe Kennzeichnung für auto-gefüllte Felder */
+.cell-auto { position: relative; }
+.cell-auto::after {
+  content: "AUTO";
+  position: absolute;
+  top: 4px; right: 6px;
+  background: var(--yellow-dim);
+  color: var(--yellow);
+  font-size: 0.6rem;
+  padding: 1px 5px;
+  border-radius: 99px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}
+
+/* FEHLT-Badge: orange Kennzeichnung für ungefüllte Pflichtfelder (Klammerabstand) */
+.cell-required { position: relative; }
+.cell-required input[type="text"] {
+  background: var(--orange-dim) !important;
+  border-color: var(--orange) !important;
+  color: var(--orange);
+}
+.cell-required input[type="text"]::placeholder { color: var(--orange); opacity: 0.7; }
+.cell-required input[type="text"]:focus {
+  background: var(--bg) !important;
+  color: var(--text);
+}
+.cell-required::after {
+  content: "FEHLT";
+  position: absolute;
+  top: 4px; right: 6px;
+  background: var(--orange);
+  color: var(--bg);
+  font-size: 0.6rem;
+  padding: 1px 5px;
+  border-radius: 99px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ============================================================
+   AUTOCOMPLETE (Portal-Suggestions)
+   ============================================================ */
+.suggestions-portal {
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border-active);
+  border-radius: var(--radius-sm);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 9999;
+  box-shadow: var(--shadow);
+  display: none;
+  min-width: 240px;
+}
+.suggestions-portal.visible { display: block; }
+.suggestion {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.suggestion:last-child { border-bottom: none; }
+.suggestion:hover { background: var(--accent-glow); }
+.suggestion strong { display: block; color: var(--text); }
+.suggestion small {
+  color: var(--text-dim);
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.75rem;
+}
+
+/* ============================================================
+   VISUALISIERUNG
+   ============================================================ */
+.viz-container {
+  background: #fafafa;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.viz-container svg { max-width: 100%; height: auto; align-self: center; }
+.viz-empty {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 40px 20px;
+}
+.viz-controls {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding-top: 10px;
+  border-top: 1px solid #e0e0d8;
+}
+.viz-controls-label {
+  color: #666;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  margin-right: 4px;
+  align-self: center;
+}
+.viz-swap-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  color: #333;
+  transition: all 0.15s;
+}
+.viz-swap-btn:hover {
+  border-color: var(--accent);
+  background: #f5f7ff;
+}
+.viz-swap-btn[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: #f5f5f3;
+}
+.viz-swap-btn[disabled]:hover {
+  border-color: #ccc;
+  background: #f5f5f3;
+}
+.viz-swap-btn .num {
+  background: #555;
+  color: #fff;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 700;
+  flex-shrink: 0;
+}
+.viz-swap-btn .dim-active {
+  background: #ffe680;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 700;
+  color: #5a4500;
+}
+.viz-swap-btn .dim-inactive {
+  color: #999;
+  padding: 2px 6px;
+  text-decoration: line-through;
+}
+.viz-swap-btn .arrow {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+/* ============================================================
+   DATABASE LIST
+   ============================================================ */
+.db-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.db-search {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+.db-search:focus { outline: none; border-color: var(--accent); }
+
+.db-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.db-table thead { background: var(--surface2); }
+.db-table th {
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+.db-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.db-table tr:last-child td { border-bottom: none; }
+.db-table tr:hover td { background: var(--surface2); }
+.db-table input {
+  width: 100%;
+  padding: 5px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.82rem;
+}
+.db-table input:hover { border-color: var(--border); }
+.db-table input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--bg);
+}
+.db-table tbody tr.hidden-row { display: none; }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 20px;
+  font-size: 0.85rem;
+  box-shadow: var(--shadow);
+  z-index: 999;
+  animation: slideIn 0.3s ease;
+  max-width: 400px;
+}
+.toast.error { border-color: var(--red); color: var(--red); }
+.toast.success { border-color: var(--green); color: var(--green); }
+@keyframes slideIn { from { transform: translateY(20px); opacity: 0; } }
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+.flex-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.flex-gap { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.text-dim { color: var(--text-dim); }
+.text-sm { font-size: 0.82rem; }
+.mb-16 { margin-bottom: 16px; }
+.hidden { display: none !important; }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border); }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo">EB</div>
+  <h1>Elementdatenblatt B – Tool</h1>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="editor">Editor</button>
+    <button class="tab-btn" data-tab="database">Datenbank <span class="tab-count" id="dbCount">0</span></button>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- ============== EDITOR TAB ============== -->
+  <div class="tab-content active" id="tab-editor">
+
+    <div class="stage-bar">
+      <div class="stage-pill active" id="stage-1"><span class="step-num">1</span> Importieren</div>
+      <div class="stage-pill" id="stage-2"><span class="step-num">2</span> Bearbeiten</div>
+      <div class="stage-pill" id="stage-3"><span class="step-num">3</span> Exportieren</div>
+    </div>
+
+    <!-- Drop-Area -->
+    <div id="dropArea">
+      <div class="card">
+        <div class="card-title">Datei importieren <span class="badge">DOCX</span></div>
+        <label class="upload-zone" id="dropZone">
+          <input type="file" id="fileInput" accept=".docx">
+          <div class="icon">📄</div>
+          <p><strong>Vorbereitete .docx-Datei hier ablegen</strong></p>
+          <p class="hint">Drag &amp; Drop oder klicken zum Auswählen</p>
+        </label>
+        <div class="flex-between" style="padding-top: 16px; margin-top: 16px; border-top: 1px solid var(--border);">
+          <span class="text-dim text-sm">Alternativ leeres Datenblatt anlegen.</span>
+          <button class="btn btn-secondary btn-sm" onclick="startBlank()">Leer starten</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Editor-Bereich -->
+    <div id="editorArea" class="hidden">
+
+      <!-- Statistik -->
+      <div class="stats-grid">
+        <div class="stat-card info"><div class="number" id="stat-layers">0</div><div class="label">Schichten</div></div>
+        <div class="stat-card info"><div class="number" id="stat-fasteners">0</div><div class="label">Verbindungen</div></div>
+        <div class="stat-card good"><div class="number" id="stat-auto">0</div><div class="label">Auto-gefüllt</div></div>
+        <div class="stat-card warn"><div class="number" id="stat-incomplete">0</div><div class="label">Unvollständig</div></div>
+      </div>
+
+      <!-- Kopfdaten -->
+      <div class="card">
+        <div class="card-title">Kopfdaten <span class="badge">Allgemein</span></div>
+        <div class="header-form">
+          <div class="field"><label>Firma</label><input type="text" id="f_company"></div>
+          <div class="field"><label>VO-Nr.</label><input type="text" id="f_vono" placeholder="z.B. AH_HQ308-0302"></div>
+          <div class="field"><label>Bauvorhaben</label><input type="text" id="f_project"></div>
+          <div class="field"><label>Bauort</label><input type="text" id="f_location"></div>
+          <div class="field">
+            <label>Elementart</label>
+            <select id="f_eltype">
+              <option value="">--</option>
+              <option>Außenwand</option>
+              <option>Innenwand</option>
+              <option>Trennwand</option>
+              <option>Deckenelement</option>
+              <option>Dachelement</option>
+            </select>
+          </div>
+          <div class="field"><label>Elementbezeichnung</label><input type="text" id="f_elname" placeholder="z.B. AW-1"></div>
+        </div>
+      </div>
+
+      <!-- Visualisierung -->
+      <div class="card">
+        <div class="card-title">Schicht-Visualisierung <span class="badge green">Live</span></div>
+        <div class="viz-container" id="vizContainer">
+          <div class="viz-empty">Schichten hinzufügen, um die Visualisierung zu generieren.</div>
+        </div>
+      </div>
+
+      <!-- Elementaufbau -->
+      <div class="card">
+        <div class="card-title">Elementaufbau <span class="badge">von außen → innen</span></div>
+        <table class="editor-table">
+          <thead>
+            <tr>
+              <th class="col-checkbox">Nr.</th>
+              <th>Bauprodukt</th>
+              <th>Eigenschaften (DIN/ETA)</th>
+              <th class="col-narrow">Dimension [mm]</th>
+              <th class="col-narrow">Achsmaß [mm]</th>
+              <th class="col-checkbox">W</th>
+              <th class="col-checkbox">B</th>
+              <th class="col-checkbox">F</th>
+              <th class="col-checkbox">WPK</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody id="layersBody"></tbody>
+        </table>
+        <button class="add-row" onclick="addLayer()">+ Schicht hinzufügen</button>
+      </div>
+
+      <!-- Verbindungsmittel -->
+      <div class="card">
+        <div class="card-title">Verbindungsmittel <span class="badge orange">Klammerabstand prüfen!</span></div>
+        <table class="editor-table">
+          <thead>
+            <tr>
+              <th class="col-checkbox">Zu</th>
+              <th>Art</th>
+              <th>Eigenschaften / Hersteller-Nr.</th>
+              <th class="col-narrow">Dimension [mm]</th>
+              <th class="col-narrow">Abstand [mm]</th>
+              <th class="col-checkbox">WPK</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody id="fastenersBody"></tbody>
+        </table>
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button class="add-row" style="flex: 1;" onclick="addFastener()">+ Verbindungsmittel hinzufügen</button>
+          <button class="add-row" style="flex: 0 0 auto; padding: 10px 18px;" onclick="autoCreateMissingFastenersUI()" title="Legt für jede Schicht (außer Riegelwerk) ein Verbindungsmittel an, sofern noch keines existiert">🔗 Fehlende automatisch</button>
+        </div>
+      </div>
+
+      <!-- Beanstandungen (selten genutzt → ganz unten) -->
+      <div class="card">
+        <div class="card-title">Festgestellte Beanstandungen <span class="badge muted">selten genutzt · eigene Druckseite</span></div>
+        <table class="editor-table">
+          <thead>
+            <tr>
+              <th class="col-narrow">Zu Pos.</th>
+              <th>Beanstandungen / Hinweise / Maßnahmen</th>
+              <th style="width: 180px;">Zu erledigen von</th>
+              <th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody id="beanstandungenBody"></tbody>
+        </table>
+        <button class="add-row" onclick="addBeanstandung()">+ Beanstandung hinzufügen</button>
+      </div>
+
+      <!-- Export -->
+      <div class="card">
+        <div class="flex-between">
+          <div>
+            <div class="card-title" style="margin-bottom: 4px;">Export</div>
+            <div class="text-sm text-dim">Druckbares Dokument oder Backup als JSON.</div>
+          </div>
+          <div class="flex-gap">
+            <button class="btn btn-secondary btn-sm" onclick="resetEditor()">↺ Neue Datei</button>
+            <button class="btn btn-secondary btn-sm" onclick="downloadJson()">⬇ JSON</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportHtml()">📄 HTML</button>
+            <button class="btn btn-primary btn-sm" onclick="printDocument()">🖨 Drucken / PDF</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== DATENBANK TAB ============== -->
+  <div class="tab-content" id="tab-database">
+
+    <div class="card">
+      <div class="card-title">Datenbank-Verwaltung <span class="badge">Materialien &amp; Verbindungen</span></div>
+      <p class="text-dim text-sm mb-16">Datenbasis für Auto-Vervollständigung. Änderungen werden lokal im Browser gespeichert (LocalStorage). Über Export/Import lassen sich Konfigurationen teilen.</p>
+      <div class="db-toolbar">
+        <input type="text" id="dbSearch" class="db-search" placeholder="🔍 Suchen in Materialien und Verbindungen ...">
+        <input type="file" id="dbImportInput" accept=".json" style="display:none">
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('dbImportInput').click()">⬆ Import</button>
+        <button class="btn btn-secondary btn-sm" onclick="exportDb()">⬇ Export</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetDbToDefault()">↺ Defaults</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Materialien <span class="badge" id="matBadge">0 Einträge</span></div>
+      <table class="db-table">
+        <thead>
+          <tr>
+            <th style="width:160px">Name</th>
+            <th style="width:220px">Eigenschaften (DIN/ETA)</th>
+            <th>Keywords (komma-sep.)</th>
+            <th style="width:80px">Default Dim</th>
+            <th class="col-actions"></th>
+          </tr>
+        </thead>
+        <tbody id="materialsDbBody"></tbody>
+      </table>
+      <button class="add-row" onclick="addMaterialEntry()">+ Material hinzufügen</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Verbindungsmittel <span class="badge" id="fasBadge">0 Einträge</span></div>
+      <table class="db-table">
+        <thead>
+          <tr>
+            <th style="width:160px">Name</th>
+            <th style="width:220px">Hersteller-Nr.</th>
+            <th style="width:140px">Dimension</th>
+            <th>Keywords (komma-sep.)</th>
+            <th style="width:90px">Hinweis-Abst.</th>
+            <th class="col-actions"></th>
+          </tr>
+        </thead>
+        <tbody id="fastenersDbBody"></tbody>
+      </table>
+      <button class="add-row" onclick="addFastenerEntry()">+ Verbindung hinzufügen</button>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Globaler Suggestions-Portal (body-level fixed, damit Dropdown nicht von Containern abgeschnitten wird) -->
+<div id="suggestionsPortal" class="suggestions-portal"></div>
+
+<div id="toastContainer"></div>
+
+<script>
+'use strict';
+
+/* ============================================================
+   1) DEFAULT-DATENBANK
+   Quellen: interne Materialliste Abbundzentrum Dahlen +
+   Hersteller-Datenblätter (Haubold/Paslode-ITW, Naturheld,
+   Fermacell, Fundermax, Steico).
+   ============================================================ */
+const DEFAULT_MATERIALS = [
+  // === KONSTRUKTIONSHOLZ ===
+  { keywords: ['KVH', 'KVH C24', 'KVH nSi', 'KVH Nsi', 'Konstruktionsvollholz'], name: 'KVH C24 nSi', properties: 'DIN EN 15497:2014', defaultDim: '60/160' },
+  { keywords: ['BSH', 'Brettschichtholz'], name: 'BSH', properties: 'DIN EN 14080', defaultDim: '' },
+  { keywords: ['Latte', 'Lattung'], name: 'Latte', properties: 'Nach DIN EN 14081', defaultDim: '40/60' },
+  { keywords: ['Konterlattung', 'Konterlatte'], name: 'Konterlattung', properties: 'Nach DIN EN 14081', defaultDim: '30/50' },
+
+  // === PLATTENWERKSTOFFE ===
+  { keywords: ['EGGER OSB-TOP4', 'OSB-TOP4', 'OSB TOP4'], name: 'EGGER OSB-TOP4', properties: 'EN 13986:2004+A1:2015; EN 300; DOP-745', defaultDim: '15' },
+  { keywords: ['EGGER OSB-3 Conti', 'OSB-3 Conti', 'OSB Conti'], name: 'EGGER OSB-3 Conti N+F', properties: 'EN 13986:2004+A1:2015; EN 300; DOP-734', defaultDim: '25' },
+  { keywords: ['OSB/3', 'OSB 3', 'OSB-3', 'OSB3', 'OSB'], name: 'OSB/3', properties: 'EN 13986:2004+A1:2015', defaultDim: '15' },
+  { keywords: ['DWD', 'Agepan', 'DWD Agepan'], name: 'DWD Agepan', properties: 'DIN EN 622-5', defaultDim: '16' },
+  { keywords: ['Funderplan', 'FunderPlan', 'Fundermax Funderplan', 'Biofaser'], name: 'Fundermax Funderplan', properties: 'DIN EN 622-2 (HB.HLA2)', defaultDim: '8' },
+  { keywords: ['FERMACELL Vapor', 'Fermacell Vapor', 'Gipsfaser Vapor'], name: 'FERMACELL Vapor', properties: 'ETA-03/0050 (mit Dampfbremse, sd≈3,3 m bei 15mm)', defaultDim: '15' },
+  { keywords: ['FERMACELL', 'Fermacell', 'Gipsfaser', 'Gipsfaserplatte'], name: 'FERMACELL Gipsfaserplatte', properties: 'ETA-03/0050', defaultDim: '15' },
+
+  // === DÄMMUNG: STEICO ===
+  { keywords: ['STEICO protect', 'Steico protect'], name: 'STEICO protect H', properties: 'DIN EN 13171, DIN EN 14964', defaultDim: '40' },
+  { keywords: ['STEICO universal', 'Steico universal', 'STEICOuniversal'], name: 'STEICO universal dry', properties: 'DIN EN 13171, DIN EN 14964', defaultDim: '60' },
+  { keywords: ['STEICO install', 'Steico install', 'STEICO Install'], name: 'STEICO install', properties: 'DIN EN 13171', defaultDim: '50' },
+  { keywords: ['STEICO flex', 'Steico flex'], name: 'STEICO flex', properties: 'DIN EN 13171', defaultDim: '60' },
+
+  // === DÄMMUNG: NATURHELD ===
+  { keywords: ['Naturheld FLEX', 'naturheld flex', 'Holzfaser Flex', 'Naturheld Holzfaser Flex'], name: 'Naturheld FLEX 50', properties: 'DIN EN 13171, λ=0,036 W/(m·K)', defaultDim: '60' },
+  { keywords: ['Naturheld FLOW', 'naturheld flow'], name: 'Naturheld FLOW (Einblasdämmung)', properties: 'ETA-23/0125', defaultDim: '' },
+  { keywords: ['Naturheld'], name: 'Naturheld Holzfaser-Dämmplatte', properties: 'DIN EN 13171', defaultDim: '60' },
+
+  // === DÄMMUNG: SONSTIGE ===
+  { keywords: ['WoodyCELL', 'Woody CELL'], name: 'Isocell WoodyCELL+', properties: 'Z-33.47-673 (20.01.20)', defaultDim: '' },
+  { keywords: ['Zellulose Einblasdämmung', 'Zellulose-Einblasdämmung', 'Isocell Zellulose'], name: 'Isocell Zellulose-Einblasdämmung', properties: 'Z-23.15-1508 (01.01.19)', defaultDim: '' },
+  { keywords: ['Mineralwolledämmung', 'Mineralwolle', 'Steinwolle', 'Glaswolle'], name: 'Mineralwolledämmung', properties: 'ETA-18/0707', defaultDim: '160' },
+  { keywords: ['Holzfaser-Einblasdämmung', 'Holzfaser Einblasdämmung'], name: 'Holzfaser-Einblasdämmung', properties: 'Z-33.47-673', defaultDim: '' },
+  { keywords: ['Holzfaser-Dämmplatte', 'Holzfaserdämmplatte'], name: 'Holzfaser-Dämmplatte', properties: 'DIN EN 13171', defaultDim: '60' },
+
+  // === GIPS ===
+  { keywords: ['Gipskarton', 'GKB'], name: 'Gipskartonplatte (GKB)', properties: 'DIN EN 520', defaultDim: '12,5' },
+  { keywords: ['GKF', 'Feuerschutzplatte'], name: 'GKF Feuerschutzplatte', properties: 'DIN EN 520, Typ DF', defaultDim: '12,5' },
+
+  // === SONSTIGES ===
+  { keywords: ['Dampfbremse', 'Dampfsperre'], name: 'Dampfbremse', properties: 'DIN EN 13984', defaultDim: '' },
+  { keywords: ['Unterspannbahn', 'USB'], name: 'Unterspannbahn', properties: 'DIN EN 13859-1', defaultDim: '' },
+  { keywords: ['Sperrholz'], name: 'Sperrholz', properties: 'DIN EN 636', defaultDim: '15' },
+  { keywords: ['Dreischicht', 'DSP', 'Dreischichtplatte'], name: 'Dreischichtplatte', properties: 'DIN EN 13353', defaultDim: '19' }
+];
+
+const DEFAULT_FASTENERS = [
+  // === HAUBOLD-KLAMMERN (ITW) ===
+  { keywords: ['Heftklammer KG', 'Klammer KG', 'KG 750', 'KLAMMERN KG'], name: 'Haubold Klammer KG 750 EG12', mfgNo: 'ITW 574943', dimension: '1,53 x 50', defaultSpacing: '100' },
+  { keywords: ['Heftklammer HD 7950', 'Klammer HD 7950', 'HD 7950'], name: 'Haubold Klammer HD 7950 EG12', mfgNo: 'ITW 503397', dimension: '1,8 x 50', defaultSpacing: '150' },
+  { keywords: ['Heftklammer HD 7975', 'Klammer HD 7975', 'HD 7975', 'Heftklammer HD'], name: 'Haubold Klammer HD 7975 EG12', mfgNo: 'ITW 503402', dimension: '1,8 x 75', defaultSpacing: '150' },
+  { keywords: ['Klammer BS', 'BS 29110', 'KLAMMERN BS'], name: 'Haubold Klammer BS 29110 A2', mfgNo: 'ITW 503609', dimension: '2,0 x 110', defaultSpacing: '150' },
+  { keywords: ['Klammer ETA', 'Klammer ETA-16', 'ETA-16/0535'], name: 'Klammer (ETA-16/0535)', mfgNo: 'ETA-16/0535', dimension: '1,8 x 75', defaultSpacing: '145' },
+  { keywords: ['Klammer', 'Klammern'], name: 'Klammer (allgemein)', mfgNo: 'siehe Spezifikation', dimension: '', defaultSpacing: '' },
+
+  // === HAUBOLD-NÄGEL (ITW) ===
+  { keywords: ['CW 3.1', 'CW 3,1', 'NÄGEL CW', 'Nagel 3,1 x 90', 'Nagel 3.1x90'], name: 'Haubold Nagel CW 3,1 x 90 RS EG12', mfgNo: 'ITW 504604', dimension: '3,1 x 90', defaultSpacing: '100' },
+  { keywords: ['Wellennagel', 'WELLENNÄGEL', 'WN25'], name: 'Haubold Wellennagel WN25', mfgNo: 'ITW 504349', dimension: '25 x 35', defaultSpacing: '' },
+
+  // === PASLODE-NÄGEL (ITW) ===
+  { keywords: ['PL 3.8', 'PL 3,8', 'Paslode 3.8', 'Nagel 3,8 x 130'], name: 'Paslode Nagel PL 3,8 x 130', mfgNo: 'ITW 140547', dimension: '3,8 x 130', defaultSpacing: '' },
+  { keywords: ['PL 4.6', 'PL 4,6', 'Paslode 4.6', 'Nagel 4,6 x 160'], name: 'Paslode Nagel PL 4,6 x 160', mfgNo: 'ITW 140558', dimension: '4,6 x 160', defaultSpacing: '' },
+
+  // === Generischer Fallback ===
+  { keywords: ['Nagel', 'Nägel'], name: 'Nagel (allgemein)', mfgNo: 'siehe Spezifikation', dimension: '', defaultSpacing: '' }
+];
+
+/* ============================================================
+   2) STATE + LOCAL STORAGE
+   ============================================================ */
+const LS_MAT = 'elementdatenblatt_materials_v3';
+const LS_FAS = 'elementdatenblatt_fasteners_v3';
+
+let materialsDB = loadFromLs(LS_MAT, DEFAULT_MATERIALS);
+let fastenersDB = loadFromLs(LS_FAS, DEFAULT_FASTENERS);
+let state = { header: {}, layers: [], fasteners: [], beanstandungen: [] };
+
+function loadFromLs(key, fallback) {
+  try {
+    const v = localStorage.getItem(key);
+    if (v) return JSON.parse(v);
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(fallback));
+}
+function saveToLs(key, data) {
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) {}
+}
+
+/* ============================================================
+   3) DOCX-IMPORT (pure JS, kein externes Skript)
+   - Liest .docx als ZIP via DecompressionStream API
+   - Extrahiert word/document.xml
+   - Parst Tabellen heuristisch in Header / Schichten / Verbindungen
+   ============================================================ */
+async function readDocxFile(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  return await extractFromZip(arrayBuffer, 'word/document.xml');
+}
+
+async function extractFromZip(arrayBuffer, targetFilename) {
+  const view = new DataView(arrayBuffer);
+  const decoder = new TextDecoder('utf-8');
+  const totalLen = arrayBuffer.byteLength;
+  const EOCD_SIG = 0x06054b50;
+  let eocdOffset = -1;
+  const maxSearch = Math.min(totalLen, 65557);
+  for (let i = totalLen - 22; i >= totalLen - maxSearch && i >= 0; i--) {
+    if (view.getUint32(i, true) === EOCD_SIG) { eocdOffset = i; break; }
+  }
+  if (eocdOffset === -1) throw new Error('Kein gültiges DOCX.');
+
+  const cdEntries = view.getUint16(eocdOffset + 10, true);
+  const cdOffset = view.getUint32(eocdOffset + 16, true);
+  const CD_SIG = 0x02014b50;
+  let pos = cdOffset;
+
+  for (let i = 0; i < cdEntries; i++) {
+    if (view.getUint32(pos, true) !== CD_SIG) throw new Error('Beschädigter CD-Eintrag.');
+    const compressionMethod = view.getUint16(pos + 10, true);
+    const compressedSize = view.getUint32(pos + 20, true);
+    const filenameLen = view.getUint16(pos + 28, true);
+    const extraLen = view.getUint16(pos + 30, true);
+    const commentLen = view.getUint16(pos + 32, true);
+    const localOffset = view.getUint32(pos + 42, true);
+    const filename = decoder.decode(new Uint8Array(arrayBuffer, pos + 46, filenameLen));
+
+    if (filename === targetFilename) {
+      const LF_SIG = 0x04034b50;
+      if (view.getUint32(localOffset, true) !== LF_SIG) throw new Error('Beschädigter LF-Header.');
+      const lhFilenameLen = view.getUint16(localOffset + 26, true);
+      const lhExtraLen = view.getUint16(localOffset + 28, true);
+      const dataStart = localOffset + 30 + lhFilenameLen + lhExtraLen;
+      const compressedData = arrayBuffer.slice(dataStart, dataStart + compressedSize);
+      if (compressionMethod === 0) return decoder.decode(compressedData);
+      if (compressionMethod === 8) {
+        const ds = new DecompressionStream('deflate-raw');
+        const stream = new Blob([compressedData]).stream().pipeThrough(ds);
+        const decompressed = await new Response(stream).arrayBuffer();
+        return decoder.decode(decompressed);
+      }
+      throw new Error('Komprimierung ' + compressionMethod + ' nicht unterstützt.');
+    }
+    pos += 46 + filenameLen + extraLen + commentLen;
+  }
+  throw new Error('Datei "' + targetFilename + '" nicht gefunden.');
+}
+
+function parseDocxTables(xmlString) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlString, 'application/xml');
+  const tables = doc.getElementsByTagNameNS('*', 'tbl');
+  const result = [];
+  for (const tbl of tables) {
+    const rows = [];
+    const trs = tbl.getElementsByTagNameNS('*', 'tr');
+    for (const tr of trs) {
+      const cells = [];
+      const tcs = Array.from(tr.children).filter(c => c.localName === 'tc');
+      for (const tc of tcs) {
+        const ts = tc.getElementsByTagNameNS('*', 't');
+        const text = Array.from(ts).map(t => t.textContent).join('').trim();
+        cells.push(text);
+      }
+      rows.push(cells);
+    }
+    result.push(rows);
+  }
+  return result;
+}
+
+function identifyTables(tables) {
+  const result = { header: null, layers: null, fasteners: null };
+  for (const tbl of tables) {
+    if (!tbl.length) continue;
+    const flat = tbl.flat().join(' ').toLowerCase();
+    if (flat.includes('firma') && flat.includes('bauvorhaben') && flat.includes('elementart')) {
+      result.header = tbl;
+    } else if (flat.includes('elementaufbau') || (flat.includes('bauprodukt') && flat.includes('eigenschaften'))) {
+      result.layers = tbl;
+    } else if (flat.includes('verbindungsmittel') && result.layers !== tbl) {
+      result.fasteners = tbl;
+    }
+  }
+  return result;
+}
+
+function extractHeader(tbl) {
+  const h = {};
+  if (!tbl) return h;
+  for (const row of tbl) {
+    for (let i = 0; i < row.length - 1; i += 2) {
+      const label = (row[i] || '').toLowerCase();
+      const value = (row[i + 1] || '').trim();
+      if (label.includes('firma')) h.company = value;
+      else if (label.includes('vo-nr') || label.includes('vo nr')) h.vono = value;
+      else if (label.includes('bauvorhaben')) h.project = value;
+      else if (label.includes('bauort')) h.location = value;
+      else if (label.includes('elementart')) h.eltype = value;
+      else if (label.includes('elementbezeichnung')) h.elname = value;
+    }
+  }
+  return h;
+}
+
+// "mm"-Suffix und Whitespace aus numerischen Zellen entfernen
+function cleanNumeric(s) {
+  return String(s || '').replace(/\s*mm\s*/gi, '').trim();
+}
+
+function extractLayers(tbl) {
+  if (!tbl || tbl.length < 2) return [];
+  let headerIdx = -1;
+  for (let i = 0; i < Math.min(tbl.length, 5); i++) {
+    const row = tbl[i].map(c => c.toLowerCase());
+    if (row.some(c => c === 'nr.') && row.some(c => c.includes('bauprodukt'))) {
+      headerIdx = i; break;
+    }
+  }
+  if (headerIdx === -1) return [];
+  const headerRow = tbl[headerIdx].map(c => c.toLowerCase());
+  const colMap = {};
+  for (let c = 0; c < headerRow.length; c++) {
+    const h = headerRow[c];
+    if (h === 'nr.' && colMap.nr === undefined) colMap.nr = c;
+    else if (h.includes('bauprodukt') && colMap.product === undefined) colMap.product = c;
+    else if (h.includes('eigenschaft') && colMap.props === undefined) colMap.props = c;
+    else if (h.includes('dimension') && colMap.dim === undefined) colMap.dim = c;
+    else if ((h.includes('abstand') || h.includes('achsmaß') || h.includes('achsmass')) && colMap.spacing === undefined) colMap.spacing = c;
+    else if (h === 'w' && colMap.w === undefined) colMap.w = c;
+    else if (h === 'b' && colMap.b === undefined) colMap.b = c;
+    else if (h === 'f' && colMap.f === undefined) colMap.f = c;
+    else if (h === 'wpk' && colMap.wpk === undefined) colMap.wpk = c;
+  }
+  const layers = [];
+  for (let i = headerIdx + 1; i < tbl.length; i++) {
+    const row = tbl[i];
+    const product = (colMap.product !== undefined ? row[colMap.product] : '').trim();
+    if (!product) continue;
+    layers.push({
+      product,
+      properties: (colMap.props !== undefined ? row[colMap.props] : '').trim(),
+      dimension: cleanNumeric(colMap.dim !== undefined ? row[colMap.dim] : ''),
+      spacing: cleanNumeric(colMap.spacing !== undefined ? row[colMap.spacing] : ''),
+      w: false, b: false, f: false, wpk: false,
+      autoFilled: {}
+    });
+  }
+  return layers;
+}
+
+function extractFasteners(tbl) {
+  if (!tbl || tbl.length < 2) return [];
+  let headerIdx = -1;
+  for (let i = 0; i < Math.min(tbl.length, 5); i++) {
+    const row = tbl[i].map(c => c.toLowerCase());
+    if (row.some(c => c === 'zu' || c === 'zu.') && row.some(c => c === 'art')) {
+      headerIdx = i; break;
+    }
+  }
+  if (headerIdx === -1) return [];
+  const headerRow = tbl[headerIdx].map(c => c.toLowerCase());
+  const colMap = {};
+  for (let c = 0; c < headerRow.length; c++) {
+    const h = headerRow[c];
+    if ((h === 'zu' || h === 'zu.') && colMap.to === undefined) colMap.to = c;
+    else if (h === 'art' && colMap.type === undefined) colMap.type = c;
+    else if (h.includes('eigenschaft') && colMap.props === undefined) colMap.props = c;
+    else if (h.includes('dimension') && colMap.dim === undefined) colMap.dim = c;
+    else if (h.includes('abstand') && colMap.spacing === undefined) colMap.spacing = c;
+    else if (h === 'wpk' && colMap.wpk === undefined) colMap.wpk = c;
+  }
+  const fasteners = [];
+  for (let i = headerIdx + 1; i < tbl.length; i++) {
+    const row = tbl[i];
+    const type = (colMap.type !== undefined ? row[colMap.type] : '').trim();
+    if (!type) continue;
+    fasteners.push({
+      to: (colMap.to !== undefined ? row[colMap.to] : '').trim(),
+      type,
+      properties: (colMap.props !== undefined ? row[colMap.props] : '').trim(),
+      dimension: cleanNumeric(colMap.dim !== undefined ? row[colMap.dim] : ''),
+      spacing: cleanNumeric(colMap.spacing !== undefined ? row[colMap.spacing] : ''),
+      wpk: false,
+      autoFilled: {}
+    });
+  }
+  return fasteners;
+}
+
+/* ============================================================
+   4) SMART-MATCHING gegen die Datenbank
+   ============================================================ */
+function findMaterialMatch(name) { return findBestMatch(name, materialsDB); }
+function findFastenerMatch(name) { return findBestMatch(name, fastenersDB); }
+
+function findBestMatch(searchName, db) {
+  if (!searchName) return null;
+  const lower = searchName.toLowerCase();
+  let best = null;
+  let bestScore = 0;
+  for (const entry of db) {
+    for (const kw of entry.keywords) {
+      if (lower.includes(kw.toLowerCase()) && kw.length > bestScore) {
+        best = entry;
+        bestScore = kw.length;
+        break;
+      }
+    }
+  }
+  return best;
+}
+
+// Riegelwerk braucht keine eigene Befestigung — es ist die Tragstruktur
+function isStructureLayer(productName) {
+  if (!productName) return false;
+  const lower = productName.toLowerCase();
+  return /\bkvh\b/.test(lower)
+      || /\bbsh\b/.test(lower)
+      || lower.includes('brettschicht')
+      || lower.includes('konstruktionsvoll')
+      || lower.includes('riegel');
+}
+
+function enrichState() {
+  for (const layer of state.layers) {
+    if (!layer.autoFilled) layer.autoFilled = {};
+    const m = findMaterialMatch(layer.product);
+    if (m) {
+      if (!layer.properties) { layer.properties = m.properties; layer.autoFilled.properties = true; }
+      if (!layer.dimension && m.defaultDim) { layer.dimension = m.defaultDim; layer.autoFilled.dimension = true; }
+    }
+  }
+  for (const f of state.fasteners) {
+    if (!f.autoFilled) f.autoFilled = {};
+    const m = findFastenerMatch(f.type);
+    if (m) {
+      if (!f.properties) { f.properties = m.mfgNo; f.autoFilled.properties = true; }
+      if (!f.dimension) { f.dimension = m.dimension; f.autoFilled.dimension = true; }
+      // Klammerabstand bewusst NICHT auto-fillen — statisch nachweispflichtig
+    }
+  }
+}
+
+// Legt für jede Schicht (außer Riegelwerk) ein Verbindungsmittel an,
+// sofern noch keines mit der Schichtnummer existiert. Gibt Anzahl Neueinträge zurück.
+function autoCreateMissingFasteners() {
+  const existing = new Set(state.fasteners.map(f => String(f.to || '').trim()));
+  let added = 0;
+  state.layers.forEach((layer, idx) => {
+    if (!layer.product) return;
+    if (isStructureLayer(layer.product)) return;
+    const layerNum = String(idx + 1);
+    if (existing.has(layerNum)) return;
+    state.fasteners.push({
+      to: layerNum, type: '', properties: '', dimension: '', spacing: '',
+      wpk: false, autoFilled: {}
+    });
+    existing.add(layerNum);
+    added++;
+  });
+  return added;
+}
+
+function autoCreateMissingFastenersUI() {
+  const added = autoCreateMissingFasteners();
+  if (added === 0) {
+    showToast('Alle Schichten (außer Riegelwerk) haben bereits ein Verbindungsmittel.', 'success');
+    return;
+  }
+  renderFasteners();
+  showToast('✓ ' + added + ' fehlende Verbindungsmittel angelegt.', 'success');
+}
+
+/* ============================================================
+   5) UI HELPERS
+   ============================================================ */
+function showToast(msg, type) {
+  const div = document.createElement('div');
+  div.className = 'toast ' + (type || 'success');
+  div.textContent = msg;
+  document.getElementById('toastContainer').appendChild(div);
+  setTimeout(() => div.remove(), 5000);
+}
+
+function setStage(n) {
+  document.querySelectorAll('.stage-pill').forEach((el, idx) => {
+    el.classList.remove('active', 'done');
+    if (idx + 1 < n) el.classList.add('done');
+    else if (idx + 1 === n) el.classList.add('active');
+  });
+}
+
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabName));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === 'tab-' + tabName));
+}
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function dateStamp() {
+  const d = new Date();
+  return d.getFullYear() + ('0' + (d.getMonth()+1)).slice(-2) + ('0' + d.getDate()).slice(-2);
+}
+
+/* ============================================================
+   6) VISUALISIERUNG
+   ============================================================ */
+function parseDim(dimStr) {
+  if (!dimStr) return null;
+  const cleaned = dimStr.replace(/,/g, '.').trim();
+  const slashMatch = cleaned.match(/^(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/);
+  if (slashMatch) return { a: parseFloat(slashMatch[1]), b: parseFloat(slashMatch[2]) };
+  const single = cleaned.match(/^(\d+(?:\.\d+)?)/);
+  if (single) return { a: parseFloat(single[1]) };
+  return null;
+}
+
+// Heuristik: Welche Dimension ist die Schichtdicke?
+//   - Lattung/Latte/Konterlattung: 1. Zahl = Wandtiefe
+//   - KVH/BSH/Riegel: 2. Zahl = Wandtiefe
+function getDefaultThickness(parsed, productName) {
+  if (!parsed.b) return parsed.a;
+  const lower = (productName || '').toLowerCase();
+  if (lower.includes('lattung') || /\blatte\b/.test(lower) || lower.includes('konterlatt')) {
+    return parsed.a;
+  }
+  return parsed.b;
+}
+
+function getLayerThickness(parsed, productName, swapDim) {
+  if (!parsed.b) return parsed.a;
+  const def = getDefaultThickness(parsed, productName);
+  if (swapDim) return def === parsed.a ? parsed.b : parsed.a;
+  return def;
+}
+
+const LAYER_COLORS = {
+  // Konstruktionsholz – Brauntöne
+  'KVH': '#c8964a', 'BSH': '#b07d3a', 'Latte': '#d4a76a',
+  'Lattung': '#d4a76a', 'Konterlatt': '#a87a4a',
+  // Plattenwerkstoffe
+  'OSB': '#e8c074', 'Funderplan': '#a89060', 'Sperrholz': '#d4b894', 'Dreischicht': '#c8a070',
+  // Holzfaserplatten – Grüntöne
+  'DWD': '#9ec5a8', 'STEICO protect': '#5e9078', 'STEICO universal': '#7da894',
+  'STEICO install': '#a8c4b4', 'STEICO': '#7da894', 'Naturheld': '#88b09a', 'Holzfaser': '#a8c08c',
+  // Dämmung
+  'Mineralwolle': '#b4d9e0', 'Zellulose': '#cfc89c', 'WoodyCELL': '#cfc89c',
+  'Einblasdämmung': '#cfc89c', 'FLOW': '#cfc89c', 'FLEX': '#a8c08c',
+  // Gipsplatten
+  'FERMACELL Vapor': '#d4c4dc', 'FERMACELL': '#e2dccc', 'Gipsfaser': '#e2dccc',
+  'GKF': '#e8d4d4', 'GKB': '#e8e2d4', 'Gipskarton': '#e8e2d4',
+  // Folien
+  'Dampfbremse': '#d8b8d8', 'Dampfsperre': '#d8b8d8', 'Unterspannbahn': '#b8c8d8',
+  'default': '#aab2c0'
+};
+
+function colorForProduct(name) {
+  if (!name) return LAYER_COLORS.default;
+  const lower = name.toLowerCase();
+  // Längere Keys zuerst, damit "STEICO universal" vor "STEICO" matcht
+  const keys = Object.keys(LAYER_COLORS).filter(k => k !== 'default').sort((a, b) => b.length - a.length);
+  for (const key of keys) {
+    if (lower.includes(key.toLowerCase())) return LAYER_COLORS[key];
+  }
+  return LAYER_COLORS.default;
+}
+
+function renderVisualization() {
+  const container = document.getElementById('vizContainer');
+  if (!container) return;
+  const validLayers = state.layers
+    .map((l, idx) => Object.assign({}, l, { originalIdx: idx, parsed: parseDim(l.dimension) }))
+    .filter(l => l.parsed && l.parsed.a > 0 && l.product);
+
+  if (validLayers.length === 0) {
+    container.innerHTML = '<div class="viz-empty">Schichten hinzufügen, um die Visualisierung zu generieren.</div>';
+    return;
+  }
+
+  const layerWidths = validLayers.map(l => getLayerThickness(l.parsed, l.product, l.swapDim));
+  const totalWidth = layerWidths.reduce((s, w) => s + w, 0);
+  if (totalWidth <= 0) {
+    container.innerHTML = '<div class="viz-empty">Dimensionen unvollständig.</div>';
+    return;
+  }
+
+  const SVG_W = 900, SVG_H = 300;
+  const PAD_L = 40, PAD_R = 40, PAD_T = 50, PAD_B = 70;
+  const wallW = SVG_W - PAD_L - PAD_R;
+  const wallH = SVG_H - PAD_T - PAD_B;
+  const scale = wallW / totalWidth;
+
+  let svg = '<svg viewBox="0 0 ' + SVG_W + ' ' + SVG_H + '" xmlns="http://www.w3.org/2000/svg" style="background:#fff;border-radius:6px;">';
+  svg += '<text x="' + PAD_L + '" y="22" font-family="Arial" font-size="13" font-weight="bold" fill="#666">außen ←</text>';
+  svg += '<text x="' + (SVG_W - PAD_R) + '" y="22" font-family="Arial" font-size="13" font-weight="bold" fill="#666" text-anchor="end">→ innen</text>';
+
+  // Schichten zeichnen
+  let xCursor = PAD_L;
+  validLayers.forEach((layer, i) => {
+    const w = layerWidths[i] * scale;
+    const color = colorForProduct(layer.product);
+    svg += '<rect x="' + xCursor + '" y="' + PAD_T + '" width="' + w + '" height="' + wallH + '" fill="' + color + '" stroke="#222" stroke-width="1" />';
+    const labelX = xCursor + w / 2;
+    if (w > 22) {
+      svg += '<text x="' + labelX + '" y="' + (PAD_T - 8) + '" font-family="Arial" font-size="11" fill="#333" text-anchor="middle">' + layerWidths[i] + '</text>';
+    } else if (w > 10) {
+      svg += '<text x="' + labelX + '" y="' + (PAD_T - 8) + '" font-family="Arial" font-size="10" fill="#333" text-anchor="middle" transform="rotate(-45 ' + labelX + ' ' + (PAD_T - 8) + ')">' + layerWidths[i] + '</text>';
+    }
+    xCursor += w;
+  });
+
+  // Legende im SVG
+  let legendY = PAD_T + wallH + 28;
+  let legendX = PAD_L;
+  validLayers.forEach((layer, i) => {
+    const labelText = (i + 1) + '. ' + layer.product + (layer.parsed.b ? ' ' + layer.parsed.a + '/' + layer.parsed.b : ' ' + layer.parsed.a);
+    const labelW = labelText.length * 6.5 + 30;
+    if (legendX + labelW > SVG_W - PAD_R) {
+      legendX = PAD_L;
+      legendY += 18;
+    }
+    svg += '<rect x="' + legendX + '" y="' + (legendY - 9) + '" width="14" height="12" fill="' + colorForProduct(layer.product) + '" stroke="#333" stroke-width="0.5" />';
+    svg += '<text x="' + (legendX + 20) + '" y="' + legendY + '" font-family="Arial" font-size="11" fill="#333">' + esc(labelText) + '</text>';
+    legendX += labelW;
+  });
+
+  svg += '<text x="' + (SVG_W - PAD_R) + '" y="' + (SVG_H - 8) + '" font-family="Arial" font-size="11" fill="#666" text-anchor="end">Gesamtdicke: ' + totalWidth + ' mm</text>';
+  svg += '</svg>';
+
+  // Toggle-Buttons unter dem SVG (für jede Schicht)
+  let buttonsHtml = '<div class="viz-controls"><span class="viz-controls-label">Schichtdicke:</span>';
+  validLayers.forEach((layer, i) => {
+    if (layer.parsed.b) {
+      const active = layerWidths[i];
+      const activeIsA = active === layer.parsed.a;
+      const aClass = activeIsA ? 'dim-active' : 'dim-inactive';
+      const bClass = activeIsA ? 'dim-inactive' : 'dim-active';
+      buttonsHtml += '<button class="viz-swap-btn" onclick="toggleSwapDim(' + layer.originalIdx + ')" title="Dimension tauschen — die hervorgehobene Zahl ist die Schichtdicke">' +
+        '<span class="num">' + (i + 1) + '</span>' +
+        '<span class="' + aClass + '">' + layer.parsed.a + '</span>' +
+        '<span class="arrow">⇄</span>' +
+        '<span class="' + bClass + '">' + layer.parsed.b + '</span>' +
+        '</button>';
+    } else {
+      buttonsHtml += '<button class="viz-swap-btn" disabled title="Nur eine Dimension — nichts zu tauschen">' +
+        '<span class="num">' + (i + 1) + '</span>' +
+        '<span class="dim-active">' + layer.parsed.a + '</span>' +
+        '</button>';
+    }
+  });
+  buttonsHtml += '</div>';
+
+  container.innerHTML = svg + buttonsHtml;
+}
+
+function toggleSwapDim(idx) {
+  if (!state.layers[idx]) return;
+  state.layers[idx].swapDim = !state.layers[idx].swapDim;
+  renderVisualization();
+}
+
+/* ============================================================
+   7) PORTAL-SUGGESTIONS (body-level fixed Dropdown)
+   ============================================================ */
+let activePortalInput = null;
+let activePortalCallback = null;
+
+function attachPortalSuggestions(input, getSuggestions, onSelect) {
+  const portal = document.getElementById('suggestionsPortal');
+
+  const update = () => {
+    if (activePortalInput !== input) return;
+    const items = getSuggestions();
+    if (!items.length) { portal.classList.remove('visible'); return; }
+    portal.innerHTML = items.map((it, i) =>
+      '<div class="suggestion" data-i="' + i + '"><strong>' + esc(it.label) + '</strong><small>' + esc(it.sub) + '</small></div>'
+    ).join('');
+    const rect = input.getBoundingClientRect();
+    portal.style.left = rect.left + 'px';
+    portal.style.top = (rect.bottom + 2) + 'px';
+    portal.style.minWidth = Math.max(rect.width, 240) + 'px';
+    portal.classList.add('visible');
+    portal.querySelectorAll('.suggestion').forEach(el => {
+      el.onmousedown = e => {
+        e.preventDefault();
+        const i = parseInt(el.dataset.i, 10);
+        onSelect(items[i]);
+        portal.classList.remove('visible');
+        activePortalInput = null;
+      };
+    });
+  };
+
+  input.addEventListener('focus', () => { activePortalInput = input; activePortalCallback = update; update(); });
+  input.addEventListener('input', () => { activePortalInput = input; activePortalCallback = update; update(); });
+  input.addEventListener('blur', () => {
+    setTimeout(() => {
+      if (activePortalInput === input) {
+        portal.classList.remove('visible');
+        activePortalInput = null;
+        activePortalCallback = null;
+      }
+    }, 200);
+  });
+}
+
+window.addEventListener('scroll', () => {
+  if (activePortalCallback) activePortalCallback();
+}, true);
+
+/* ============================================================
+   8) RENDER & BIND – KOPFDATEN
+   ============================================================ */
+function renderHeader() {
+  document.getElementById('f_company').value = state.header.company || 'Abbundzentrum Dahlen';
+  document.getElementById('f_vono').value = state.header.vono || '';
+  document.getElementById('f_project').value = state.header.project || '';
+  document.getElementById('f_location').value = state.header.location || '';
+  document.getElementById('f_eltype').value = state.header.eltype || '';
+  document.getElementById('f_elname').value = state.header.elname || '';
+}
+
+function bindHeaderInputs() {
+  const map = {
+    f_company: 'company', f_vono: 'vono', f_project: 'project',
+    f_location: 'location', f_eltype: 'eltype', f_elname: 'elname'
+  };
+  for (const id in map) {
+    document.getElementById(id).addEventListener('input', e => { state.header[map[id]] = e.target.value; });
+  }
+}
+
+/* ============================================================
+   9) RENDER & BIND – SCHICHTEN
+   ============================================================ */
+function renderLayers() {
+  const tbody = document.getElementById('layersBody');
+  tbody.innerHTML = '';
+  state.layers.forEach((layer, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="text-dim" style="text-align:center; font-weight:600;">' + (idx + 1) + '</td>' +
+      '<td><input type="text" class="autocomplete-material" data-field="product" data-idx="' + idx + '" value="' + esc(layer.product) + '" placeholder="z.B. KVH, OSB ..."></td>' +
+      '<td class="' + (layer.autoFilled?.properties ? 'cell-auto' : '') + '"><input type="text" data-field="properties" data-idx="' + idx + '" value="' + esc(layer.properties) + '" placeholder="DIN ..."></td>' +
+      '<td class="' + (layer.autoFilled?.dimension ? 'cell-auto' : '') + '"><input type="text" data-field="dimension" data-idx="' + idx + '" value="' + esc(layer.dimension) + '" placeholder="z.B. 60/160"></td>' +
+      '<td><input type="text" data-field="spacing" data-idx="' + idx + '" value="' + esc(layer.spacing) + '" placeholder="z.B. 625"></td>' +
+      '<td class="col-checkbox"><input type="checkbox" data-field="w" data-idx="' + idx + '" ' + (layer.w ? 'checked' : '') + '></td>' +
+      '<td class="col-checkbox"><input type="checkbox" data-field="b" data-idx="' + idx + '" ' + (layer.b ? 'checked' : '') + '></td>' +
+      '<td class="col-checkbox"><input type="checkbox" data-field="f" data-idx="' + idx + '" ' + (layer.f ? 'checked' : '') + '></td>' +
+      '<td class="col-checkbox"><input type="checkbox" data-field="wpk" data-idx="' + idx + '" ' + (layer.wpk ? 'checked' : '') + '></td>' +
+      '<td class="col-actions"><button class="del-btn" onclick="removeLayer(' + idx + ')" title="Entfernen">×</button></td>';
+    tbody.appendChild(tr);
+  });
+  bindLayerInputs();
+  renderStats();
+  renderVisualization();
+}
+
+function bindLayerInputs() {
+  const tbody = document.getElementById('layersBody');
+  tbody.querySelectorAll('input').forEach(input => {
+    const field = input.dataset.field;
+    const idx = parseInt(input.dataset.idx, 10);
+    if (input.type === 'checkbox') {
+      input.addEventListener('change', () => {
+        state.layers[idx][field] = input.checked;
+        renderVisualization();
+      });
+      return;
+    }
+    input.addEventListener('input', () => {
+      state.layers[idx][field] = input.value;
+      // Manuelle Eingabe: AUTO-Badge dieses Felds entfernen
+      if (state.layers[idx].autoFilled?.[field]) {
+        state.layers[idx].autoFilled[field] = false;
+        input.closest('td')?.classList.remove('cell-auto');
+      }
+      // Auto-Match bei Bauprodukt: DOM patchen statt rerender (Cursor-Erhalt!)
+      if (field === 'product') {
+        const m = findMaterialMatch(input.value);
+        if (m) {
+          const layer = state.layers[idx];
+          const row = input.closest('tr');
+          if (!layer.autoFilled) layer.autoFilled = {};
+          if (!layer.properties && m.properties) {
+            layer.properties = m.properties;
+            layer.autoFilled.properties = true;
+            const propInput = row?.querySelector('input[data-field="properties"]');
+            if (propInput) {
+              propInput.value = m.properties;
+              propInput.closest('td')?.classList.add('cell-auto');
+            }
+          }
+          if (!layer.dimension && m.defaultDim) {
+            layer.dimension = m.defaultDim;
+            layer.autoFilled.dimension = true;
+            const dimInput = row?.querySelector('input[data-field="dimension"]');
+            if (dimInput) {
+              dimInput.value = m.defaultDim;
+              dimInput.closest('td')?.classList.add('cell-auto');
+            }
+          }
+        }
+      }
+      renderStats();
+      renderVisualization();
+    });
+    if (input.classList.contains('autocomplete-material')) {
+      attachPortalSuggestions(input, () => {
+        const v = input.value.toLowerCase();
+        if (!v) return [];
+        const seen = new Set();
+        const r = [];
+        for (const m of materialsDB) {
+          for (const kw of m.keywords) {
+            if (kw.toLowerCase().includes(v) && !seen.has(m.name)) {
+              seen.add(m.name);
+              r.push({ label: m.name, sub: m.properties, value: m.name, data: m });
+              break;
+            }
+          }
+        }
+        return r.slice(0, 10);
+      }, sel => {
+        state.layers[idx].product = sel.value;
+        state.layers[idx].properties = sel.data.properties;
+        state.layers[idx].autoFilled = { properties: true };
+        if (sel.data.defaultDim && !state.layers[idx].dimension) {
+          state.layers[idx].dimension = sel.data.defaultDim;
+          state.layers[idx].autoFilled.dimension = true;
+        }
+        renderLayers();
+      });
+    }
+  });
+}
+
+/* ============================================================
+   10) RENDER & BIND – VERBINDUNGSMITTEL
+   ============================================================ */
+function renderFasteners() {
+  const tbody = document.getElementById('fastenersBody');
+  tbody.innerHTML = '';
+  state.fasteners.forEach((f, idx) => {
+    const fastenerMatch = f.type ? findFastenerMatch(f.type) : null;
+    const spacingHint = fastenerMatch?.defaultSpacing || '';
+    const spacingIsRequired = !f.spacing && !!f.type;
+    const spacingClass = spacingIsRequired ? 'cell-required' : '';
+    const spacingPlaceholder = spacingIsRequired
+      ? (spacingHint ? 'Pflicht – z.B. ' + spacingHint : 'Pflicht')
+      : 'mm';
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><input type="text" data-field="to" data-idx="' + idx + '" value="' + esc(f.to) + '" placeholder="Nr."></td>' +
+      '<td><input type="text" class="autocomplete-fastener" data-field="type" data-idx="' + idx + '" value="' + esc(f.type) + '" placeholder="z.B. Klammer, Nagel ..."></td>' +
+      '<td class="' + (f.autoFilled?.properties ? 'cell-auto' : '') + '"><input type="text" data-field="properties" data-idx="' + idx + '" value="' + esc(f.properties) + '" placeholder="Hersteller-Nr."></td>' +
+      '<td class="' + (f.autoFilled?.dimension ? 'cell-auto' : '') + '"><input type="text" data-field="dimension" data-idx="' + idx + '" value="' + esc(f.dimension) + '" placeholder="z.B. 1,8 x 75"></td>' +
+      '<td class="' + spacingClass + '"><input type="text" data-field="spacing" data-idx="' + idx + '" value="' + esc(f.spacing) + '" placeholder="' + spacingPlaceholder + '"></td>' +
+      '<td class="col-checkbox"><input type="checkbox" data-field="wpk" data-idx="' + idx + '" ' + (f.wpk ? 'checked' : '') + '></td>' +
+      '<td class="col-actions"><button class="del-btn" onclick="removeFastener(' + idx + ')" title="Entfernen">×</button></td>';
+    tbody.appendChild(tr);
+  });
+  bindFastenerInputs();
+  renderStats();
+}
+
+function bindFastenerInputs() {
+  const tbody = document.getElementById('fastenersBody');
+  tbody.querySelectorAll('input').forEach(input => {
+    const field = input.dataset.field;
+    const idx = parseInt(input.dataset.idx, 10);
+    if (input.type === 'checkbox') {
+      input.addEventListener('change', () => { state.fasteners[idx][field] = input.checked; });
+      return;
+    }
+    input.addEventListener('input', () => {
+      state.fasteners[idx][field] = input.value;
+      if (state.fasteners[idx].autoFilled?.[field]) {
+        state.fasteners[idx].autoFilled[field] = false;
+        input.closest('td')?.classList.remove('cell-auto');
+      }
+      const row = input.closest('tr');
+      if (field === 'type') {
+        const m = findFastenerMatch(input.value);
+        if (m) {
+          const f = state.fasteners[idx];
+          if (!f.autoFilled) f.autoFilled = {};
+          if (!f.properties && m.mfgNo) {
+            f.properties = m.mfgNo;
+            f.autoFilled.properties = true;
+            const propInput = row?.querySelector('input[data-field="properties"]');
+            if (propInput) {
+              propInput.value = m.mfgNo;
+              propInput.closest('td')?.classList.add('cell-auto');
+            }
+          }
+          if (!f.dimension && m.dimension) {
+            f.dimension = m.dimension;
+            f.autoFilled.dimension = true;
+            const dimInput = row?.querySelector('input[data-field="dimension"]');
+            if (dimInput) {
+              dimInput.value = m.dimension;
+              dimInput.closest('td')?.classList.add('cell-auto');
+            }
+          }
+        }
+        updateSpacingRequiredCell(idx, row);
+      } else if (field === 'spacing') {
+        updateSpacingRequiredCell(idx, row);
+      }
+      renderStats();
+    });
+    if (input.classList.contains('autocomplete-fastener')) {
+      attachPortalSuggestions(input, () => {
+        const v = input.value.toLowerCase();
+        if (!v) return [];
+        const seen = new Set();
+        const r = [];
+        for (const f of fastenersDB) {
+          for (const kw of f.keywords) {
+            if (kw.toLowerCase().includes(v) && !seen.has(f.name)) {
+              seen.add(f.name);
+              r.push({ label: f.name, sub: f.mfgNo + ' · ' + f.dimension, value: f.name, data: f });
+              break;
+            }
+          }
+        }
+        return r.slice(0, 10);
+      }, sel => {
+        state.fasteners[idx].type = sel.value;
+        state.fasteners[idx].properties = sel.data.mfgNo;
+        state.fasteners[idx].dimension = sel.data.dimension;
+        state.fasteners[idx].autoFilled = { properties: true, dimension: true };
+        renderFasteners();
+      });
+    }
+  });
+}
+
+function updateSpacingRequiredCell(idx, row) {
+  if (!row) return;
+  const spacingInput = row.querySelector('input[data-field="spacing"]');
+  if (!spacingInput) return;
+  const td = spacingInput.closest('td');
+  if (!td) return;
+  const f = state.fasteners[idx];
+  const isRequired = !f.spacing && !!f.type;
+  td.classList.toggle('cell-required', isRequired);
+  if (isRequired) {
+    const m = findFastenerMatch(f.type);
+    const hint = m?.defaultSpacing || '';
+    spacingInput.placeholder = hint ? 'Pflicht – z.B. ' + hint : 'Pflicht';
+  } else {
+    spacingInput.placeholder = 'mm';
+  }
+}
+
+/* ============================================================
+   11) RENDER & BIND – BEANSTANDUNGEN
+   ============================================================ */
+function renderBeanstandungen() {
+  const tbody = document.getElementById('beanstandungenBody');
+  tbody.innerHTML = '';
+  state.beanstandungen.forEach((b, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><input type="text" data-field="pos" data-idx="' + idx + '" value="' + esc(b.pos) + '" placeholder="Nr."></td>' +
+      '<td><textarea data-field="text" data-idx="' + idx + '" rows="2" placeholder="Beanstandung / Hinweis / Maßnahme">' + esc(b.text) + '</textarea></td>' +
+      '<td><input type="text" data-field="responsible" data-idx="' + idx + '" value="' + esc(b.responsible) + '" placeholder="Name"></td>' +
+      '<td class="col-actions"><button class="del-btn" onclick="removeBeanstandung(' + idx + ')" title="Entfernen">×</button></td>';
+    tbody.appendChild(tr);
+  });
+  bindBeanstandungenInputs();
+}
+
+function bindBeanstandungenInputs() {
+  const tbody = document.getElementById('beanstandungenBody');
+  tbody.querySelectorAll('input, textarea').forEach(input => {
+    const field = input.dataset.field;
+    const idx = parseInt(input.dataset.idx, 10);
+    input.addEventListener('input', () => { state.beanstandungen[idx][field] = input.value; });
+  });
+}
+
+/* ============================================================
+   12) STATS
+   ============================================================ */
+function renderStats() {
+  document.getElementById('stat-layers').textContent = state.layers.length;
+  document.getElementById('stat-fasteners').textContent = state.fasteners.length;
+  const auto = state.layers.filter(l => l.autoFilled?.properties).length +
+               state.fasteners.filter(f => f.autoFilled?.properties).length;
+  const incomplete = state.layers.filter(l => !l.properties || !l.dimension).length +
+                     state.fasteners.filter(f => !f.properties || !f.dimension || !f.spacing).length;
+  document.getElementById('stat-auto').textContent = auto;
+  document.getElementById('stat-incomplete').textContent = incomplete;
+}
+
+/* ============================================================
+   13) CRUD-OPERATIONEN
+   ============================================================ */
+function addLayer() {
+  state.layers.push({
+    product: '', properties: '', dimension: '', spacing: '',
+    w: false, b: false, f: false, wpk: false, autoFilled: {}
+  });
+  renderLayers();
+}
+function removeLayer(idx) { state.layers.splice(idx, 1); renderLayers(); }
+
+function addFastener() {
+  state.fasteners.push({
+    to: '', type: '', properties: '', dimension: '', spacing: '',
+    wpk: false, autoFilled: {}
+  });
+  renderFasteners();
+}
+function removeFastener(idx) { state.fasteners.splice(idx, 1); renderFasteners(); }
+
+function addBeanstandung() {
+  state.beanstandungen.push({ pos: '', text: '', responsible: '' });
+  renderBeanstandungen();
+}
+function removeBeanstandung(idx) { state.beanstandungen.splice(idx, 1); renderBeanstandungen(); }
+
+/* ============================================================
+   14) FILE-HANDLING
+   ============================================================ */
+async function handleFile(file) {
+  if (!file) return;
+  if (!file.name.toLowerCase().endsWith('.docx')) {
+    showToast('Bitte eine .docx-Datei auswählen.', 'error');
+    return;
+  }
+  try {
+    const xml = await readDocxFile(file);
+    const tables = parseDocxTables(xml);
+    const identified = identifyTables(tables);
+    state.header = extractHeader(identified.header);
+    state.layers = extractLayers(identified.layers);
+    state.fasteners = extractFasteners(identified.fasteners);
+    state.beanstandungen = [];
+    enrichState();
+    const autoCreated = autoCreateMissingFasteners();
+    renderHeader();
+    renderLayers();
+    renderFasteners();
+    renderBeanstandungen();
+    setStage(2);
+    document.getElementById('dropArea').classList.add('hidden');
+    document.getElementById('editorArea').classList.remove('hidden');
+    const auto = state.layers.filter(l => l.autoFilled?.properties).length +
+                 state.fasteners.filter(f => f.autoFilled?.properties).length;
+    let msg = '✓ ' + state.layers.length + ' Schichten, ' + state.fasteners.length + ' Verbindungen importiert. ' + auto + ' Felder auto-gefüllt.';
+    if (autoCreated > 0) msg += ' ' + autoCreated + ' Verbindungsmittel automatisch ergänzt.';
+    showToast(msg, 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Fehler beim Lesen: ' + err.message, 'error');
+  }
+}
+
+function startBlank() {
+  state.header = { company: 'Abbundzentrum Dahlen' };
+  state.layers = [];
+  state.fasteners = [];
+  state.beanstandungen = [];
+  addLayer();
+  addFastener();
+  renderHeader();
+  renderLayers();
+  renderFasteners();
+  renderBeanstandungen();
+  setStage(2);
+  document.getElementById('dropArea').classList.add('hidden');
+  document.getElementById('editorArea').classList.remove('hidden');
+}
+
+function resetEditor() {
+  if (!confirm('Aktuelle Bearbeitung verwerfen?')) return;
+  state = { header: {}, layers: [], fasteners: [], beanstandungen: [] };
+  const fi = document.getElementById('fileInput');
+  if (fi) fi.value = '';
+  document.getElementById('editorArea').classList.add('hidden');
+  document.getElementById('dropArea').classList.remove('hidden');
+  setStage(1);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  showToast('Editor zurückgesetzt. Neue Datei wählen.', 'success');
+}
+
+/* ============================================================
+   15) EXPORT
+   ============================================================ */
+function exportHtml() {
+  const html = generateExportHtml();
+  downloadBlob(html, 'text/html;charset=utf-8',
+    'Elementdatenblatt_B_' + sanitize(state.header.elname || 'Element') + '_' + dateStamp() + '.html');
+  setStage(3);
+  showToast('HTML-Export gespeichert.', 'success');
+}
+
+function printDocument() {
+  const html = generateExportHtml();
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => w.print(), 500);
+  setStage(3);
+}
+
+function downloadJson() {
+  const data = JSON.stringify(state, null, 2);
+  downloadBlob(data, 'application/json',
+    'Elementdatenblatt_B_' + sanitize(state.header.elname || 'Element') + '_' + dateStamp() + '.json');
+  showToast('JSON-Backup gespeichert.', 'success');
+}
+
+function downloadBlob(content, mime, filename) {
+  const blob = new Blob([content], { type: mime });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+}
+
+function sanitize(s) { return String(s).replace(/[^\w\-]/g, '_'); }
+
+function generateExportHtml() {
+  const h = state.header;
+  const vizSvgEl = document.querySelector('#vizContainer svg');
+  const vizSvg = vizSvgEl ? vizSvgEl.outerHTML : '';
+
+  const layersRows = state.layers.map((l, i) =>
+    '<tr>' +
+    '<td style="text-align:center">' + (i+1) + '</td>' +
+    '<td>' + esc(l.product) + '</td>' +
+    '<td>' + esc(l.properties) + '</td>' +
+    '<td style="text-align:center">' + esc(l.dimension) + '</td>' +
+    '<td style="text-align:center">' + esc(l.spacing) + '</td>' +
+    '<td style="text-align:center">' + (l.w ? '✓' : '') + '</td>' +
+    '<td style="text-align:center">' + (l.b ? '✓' : '') + '</td>' +
+    '<td style="text-align:center">' + (l.f ? '✓' : '') + '</td>' +
+    '<td style="text-align:center">' + (l.wpk ? '✓' : '') + '</td>' +
+    '</tr>'
+  ).join('');
+
+  const fastenersRows = state.fasteners.map(f =>
+    '<tr>' +
+    '<td style="text-align:center">' + esc(f.to) + '</td>' +
+    '<td>' + esc(f.type) + '</td>' +
+    '<td>' + esc(f.properties) + '</td>' +
+    '<td style="text-align:center">' + esc(f.dimension) + '</td>' +
+    '<td style="text-align:center">' + esc(f.spacing) + '</td>' +
+    '<td style="text-align:center">' + (f.wpk ? '✓' : '') + '</td>' +
+    '</tr>'
+  ).join('');
+
+  const beanstandungenRows = state.beanstandungen.map(b =>
+    '<tr>' +
+    '<td style="text-align:center">' + esc(b.pos) + '</td>' +
+    '<td>' + esc(b.text).replace(/\n/g, '<br>') + '</td>' +
+    '<td>' + esc(b.responsible) + '</td>' +
+    '</tr>'
+  ).join('');
+
+  // Tabellen-Platzhalter füllen, damit auch leere Tabellen stabil sind
+  const beanstandungenFiller = state.beanstandungen.length === 0
+    ? '<tr><td>&nbsp;</td><td style="height:8mm">&nbsp;</td><td>&nbsp;</td></tr>'.repeat(8)
+    : '';
+
+  return '<!DOCTYPE html>\n' +
+'<html lang="de"><head><meta charset="UTF-8">\n' +
+'<title>Elementdatenblatt B – ' + esc(h.elname || '') + '</title>\n' +
+'<style>\n' +
+'  @page { size: A4; margin: 14mm 14mm; }\n' +
+'  html, body { margin: 0; padding: 0; }\n' +
+'  body { font-family: Arial, sans-serif; font-size: 9.5pt; color: #000; }\n' +
+'  h1 { font-size: 16pt; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 10px; }\n' +
+'  h2 { font-size: 11pt; font-weight: bold; margin: 8px 0 4px; }\n' +
+'  table { width: 100%; border-collapse: collapse; margin: 4px 0; font-size: 9pt; }\n' +
+'  th, td { border: 1px solid #000; padding: 3px 6px; vertical-align: top; }\n' +
+'  th { background: #f0f0f0; text-align: left; font-weight: bold; }\n' +
+'  .header-table td { padding: 5px 7px; }\n' +
+'  .header-table td.label { background: #f5f5f5; font-weight: bold; width: 110px; }\n' +
+'  .legend { font-size: 8pt; color: #444; margin: 2px 0; }\n' +
+'  .meta { font-size: 8pt; color: #666; margin-top: 8px; padding-top: 6px; border-top: 1px solid #ccc; display: flex; justify-content: space-between; }\n' +
+'  .signature {\n' +
+'    border: 1px solid #000; padding: 6px; margin: 4px 0;\n' +
+'    display: grid; grid-template-columns: 30px 1fr 1fr 1fr;\n' +
+'    gap: 6px; align-items: end; font-size: 9pt;\n' +
+'  }\n' +
+'  .signature .checkbox { width: 13px; height: 13px; border: 1px solid #000; display: inline-block; }\n' +
+'  .signature .line { border-bottom: 1px solid #000; min-height: 18px; }\n' +
+'  .page {\n' +
+'    display: flex; flex-direction: column;\n' +
+'    min-height: calc(297mm - 28mm);\n' +
+'    page-break-after: always;\n' +
+'  }\n' +
+'  .page:last-child { page-break-after: auto; }\n' +
+'  .viz-section {\n' +
+'    flex: 1;\n' +
+'    min-height: 60mm;\n' +
+'    display: flex;\n' +
+'    align-items: center;\n' +
+'    justify-content: center;\n' +
+'    border: 1px solid #999;\n' +
+'    padding: 4mm;\n' +
+'    margin: 4px 0;\n' +
+'    overflow: hidden;\n' +
+'  }\n' +
+'  .viz-section svg { max-width: 100%; max-height: 100%; height: auto; }\n' +
+'  .filler { flex-grow: 1; min-height: 4mm; }\n' +
+'  table, .signature { page-break-inside: avoid; }\n' +
+'  @media screen {\n' +
+'    body { background: #f5f5f5; padding: 20px; }\n' +
+'    .page { background: #fff; padding: 14mm; box-shadow: 0 2px 12px rgba(0,0,0,0.1); margin: 0 auto 20px; max-width: 210mm; min-height: 297mm; }\n' +
+'  }\n' +
+'</style></head><body>\n' +
+
+// SEITE 1: Hauptdatenblatt
+'<div class="page">\n' +
+'<h1>Elementdatenblatt B</h1>\n' +
+'<table class="header-table">\n' +
+'  <tr><td class="label">Firma</td><td>' + esc(h.company || '') + '</td><td class="label">VO-Nr.</td><td>' + esc(h.vono || '') + '</td></tr>\n' +
+'  <tr><td class="label">Bauvorhaben</td><td>' + esc(h.project || '') + '</td><td class="label">Bauort</td><td>' + esc(h.location || '') + '</td></tr>\n' +
+'  <tr><td class="label">Elementart</td><td>' + esc(h.eltype || '') + '</td><td class="label">Elementbezeichnung</td><td>' + esc(h.elname || '') + '</td></tr>\n' +
+'</table>\n' +
+
+'<h2>Konstruktionszeichnung des vollständigen Elements</h2>\n' +
+'<div class="viz-section">' + (vizSvg || '<span style="color:#999">Keine Visualisierung</span>') + '</div>\n' +
+
+'<div style="font-size:9pt;margin:4px 0 2px;">Kontrolle und Freigabe durch den für die Werkplanung Verantwortlichen z.B. Entwurfsverfasser:<br>\n' +
+'Die Konstruktion stimmt mit den Vorgaben aus den bautechnischen Nachweisen überein:</div>\n' +
+'<div class="signature">\n' +
+'  <span class="checkbox"></span>\n' +
+'  <div>Beanstandung/Bemerkung<br><small>(s. Rückseite)</small></div>\n' +
+'  <div><div class="line"></div><small>Datum</small></div>\n' +
+'  <div><div class="line"></div><small>Unterschrift</small></div>\n' +
+'</div>\n' +
+
+'<h2>Elementaufbau (von außen → innen)</h2>\n' +
+'<div class="legend">W – Werksleistung &nbsp;|&nbsp; B – Ausführung auf der Baustelle &nbsp;|&nbsp; F – Fremdleistung auf der Baustelle &nbsp;|&nbsp; WPK – Werkseigene Produktionskontrolle</div>\n' +
+'<table>\n' +
+'  <thead><tr>\n' +
+'    <th style="width:30px">Nr.</th><th>Bauprodukt</th><th>Eigenschaften</th>\n' +
+'    <th style="width:60px">Dimension [mm]</th><th style="width:60px">Achsmaß [mm]</th>\n' +
+'    <th style="width:25px">W</th><th style="width:25px">B</th><th style="width:25px">F</th><th style="width:35px">WPK</th>\n' +
+'  </tr></thead>\n' +
+'  <tbody>' + (layersRows || '<tr><td colspan="9" style="text-align:center;color:#999">Keine Schichten</td></tr>') + '</tbody>\n' +
+'</table>\n' +
+
+'<h2>Verbindungsmittel</h2>\n' +
+'<table>\n' +
+'  <thead><tr>\n' +
+'    <th style="width:30px">Zu</th><th>Art</th><th>Eigenschaften / Hersteller-Nr.</th>\n' +
+'    <th style="width:80px">Dimension [mm]</th><th style="width:80px">Abstand [mm]</th><th style="width:35px">WPK</th>\n' +
+'  </tr></thead>\n' +
+'  <tbody>' + (fastenersRows || '<tr><td colspan="6" style="text-align:center;color:#999">Keine Verbindungsmittel</td></tr>') + '</tbody>\n' +
+'</table>\n' +
+
+'<div class="filler"></div>\n' +
+
+'<div style="font-size:9pt;margin:4px 0 2px;">Werkseigene Produktionskontrolle zur Herstellung des Elements:<br>\n' +
+'Die Ausführung entspricht den in Spalte W angekreuzten Elementschichten und Verbindungen.</div>\n' +
+'<div class="signature">\n' +
+'  <span class="checkbox"></span>\n' +
+'  <div>Beanstandung/Bemerkung<br><small>(s. Rückseite)</small></div>\n' +
+'  <div><div class="line"></div><small>Herstellungsdatum</small></div>\n' +
+'  <div><div class="line"></div><small>Unterschrift</small></div>\n' +
+'</div>\n' +
+
+'<div class="meta">\n' +
+'  <span>Abbundzentrum Dahlen GmbH &amp; Co. KG &nbsp;·&nbsp; Verfasser: Hannes Kettenburg &nbsp;·&nbsp; Version: 25_01</span>\n' +
+'  <span>Erstellt: ' + new Date().toLocaleDateString('de-DE') + '</span>\n' +
+'</div>\n' +
+'</div>\n' +
+
+// SEITE 2: Beanstandungen (immer mit ausgefüllter A4-Seite, viel Platz für Notizen)
+'<div class="page">\n' +
+'<h1>Festgestellte Beanstandungen, Hinweise und erforderliche Maßnahmen</h1>\n' +
+'<div class="legend" style="margin-bottom:6px;">Bauvorhaben: ' + esc(h.project || '') + ' &nbsp;·&nbsp; Element: ' + esc(h.elname || '') + ' &nbsp;·&nbsp; VO-Nr.: ' + esc(h.vono || '') + '</div>\n' +
+'<table>\n' +
+'  <thead><tr>\n' +
+'    <th style="width:50px">Zu Pos.</th>\n' +
+'    <th>Beanstandungen / Bemerkungen / Hinweise &nbsp;·&nbsp; Fehlerbehandlung / Maßnahmen</th>\n' +
+'    <th style="width:160px">Zu erledigen von</th>\n' +
+'  </tr></thead>\n' +
+'  <tbody>\n' + beanstandungenRows + beanstandungenFiller + '</tbody>\n' +
+'</table>\n' +
+'<div class="filler"></div>\n' +
+'<div class="meta">\n' +
+'  <span>Abbundzentrum Dahlen GmbH &amp; Co. KG &nbsp;·&nbsp; Version: 25_01</span>\n' +
+'  <span>Seite 2 — Beanstandungen</span>\n' +
+'</div>\n' +
+'</div>\n' +
+
+'</body></html>';
+}
+
+/* ============================================================
+   16) DATENBANK-VERWALTUNG
+   ============================================================ */
+function renderMaterialsDb() {
+  const tbody = document.getElementById('materialsDbBody');
+  tbody.innerHTML = materialsDB.map((m, i) =>
+    '<tr>' +
+    '<td><input type="text" value="' + esc(m.name) + '" data-i="' + i + '" data-f="name"></td>' +
+    '<td><input type="text" value="' + esc(m.properties) + '" data-i="' + i + '" data-f="properties"></td>' +
+    '<td><input type="text" value="' + esc(m.keywords.join(', ')) + '" data-i="' + i + '" data-f="keywords"></td>' +
+    '<td><input type="text" value="' + esc(m.defaultDim || '') + '" data-i="' + i + '" data-f="defaultDim"></td>' +
+    '<td class="col-actions"><button class="del-btn" onclick="removeMaterialEntry(' + i + ')" title="Entfernen">×</button></td>' +
+    '</tr>'
+  ).join('');
+  tbody.querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', () => {
+      const i = parseInt(input.dataset.i, 10);
+      const f = input.dataset.f;
+      if (f === 'keywords') {
+        materialsDB[i].keywords = input.value.split(',').map(s => s.trim()).filter(Boolean);
+      } else {
+        materialsDB[i][f] = input.value;
+      }
+      saveToLs(LS_MAT, materialsDB);
+    });
+  });
+  document.getElementById('matBadge').textContent = materialsDB.length + ' Einträge';
+  updateDbCount();
+  applyDbFilter();
+}
+
+function renderFastenersDb() {
+  const tbody = document.getElementById('fastenersDbBody');
+  tbody.innerHTML = fastenersDB.map((f, i) =>
+    '<tr>' +
+    '<td><input type="text" value="' + esc(f.name) + '" data-i="' + i + '" data-f="name"></td>' +
+    '<td><input type="text" value="' + esc(f.mfgNo) + '" data-i="' + i + '" data-f="mfgNo"></td>' +
+    '<td><input type="text" value="' + esc(f.dimension) + '" data-i="' + i + '" data-f="dimension"></td>' +
+    '<td><input type="text" value="' + esc(f.keywords.join(', ')) + '" data-i="' + i + '" data-f="keywords"></td>' +
+    '<td><input type="text" value="' + esc(f.defaultSpacing || '') + '" data-i="' + i + '" data-f="defaultSpacing"></td>' +
+    '<td class="col-actions"><button class="del-btn" onclick="removeFastenerEntry(' + i + ')" title="Entfernen">×</button></td>' +
+    '</tr>'
+  ).join('');
+  tbody.querySelectorAll('input').forEach(input => {
+    input.addEventListener('input', () => {
+      const i = parseInt(input.dataset.i, 10);
+      const f = input.dataset.f;
+      if (f === 'keywords') {
+        fastenersDB[i].keywords = input.value.split(',').map(s => s.trim()).filter(Boolean);
+      } else {
+        fastenersDB[i][f] = input.value;
+      }
+      saveToLs(LS_FAS, fastenersDB);
+    });
+  });
+  document.getElementById('fasBadge').textContent = fastenersDB.length + ' Einträge';
+  updateDbCount();
+  applyDbFilter();
+}
+
+function applyDbFilter() {
+  const q = (document.getElementById('dbSearch')?.value || '').toLowerCase().trim();
+  document.querySelectorAll('#materialsDbBody tr, #fastenersDbBody tr').forEach(tr => {
+    if (!q) { tr.classList.remove('hidden-row'); return; }
+    tr.classList.toggle('hidden-row', !tr.textContent.toLowerCase().includes(q));
+  });
+}
+
+function updateDbCount() {
+  document.getElementById('dbCount').textContent = materialsDB.length + fastenersDB.length;
+}
+
+function addMaterialEntry() {
+  materialsDB.push({ name: 'Neues Material', properties: '', keywords: [], defaultDim: '' });
+  saveToLs(LS_MAT, materialsDB);
+  renderMaterialsDb();
+}
+function removeMaterialEntry(i) {
+  materialsDB.splice(i, 1);
+  saveToLs(LS_MAT, materialsDB);
+  renderMaterialsDb();
+}
+function addFastenerEntry() {
+  fastenersDB.push({ name: 'Neue Verbindung', mfgNo: '', dimension: '', keywords: [], defaultSpacing: '' });
+  saveToLs(LS_FAS, fastenersDB);
+  renderFastenersDb();
+}
+function removeFastenerEntry(i) {
+  fastenersDB.splice(i, 1);
+  saveToLs(LS_FAS, fastenersDB);
+  renderFastenersDb();
+}
+
+function exportDb() {
+  const data = {
+    materials: materialsDB,
+    fasteners: fastenersDB,
+    exportedAt: new Date().toISOString(),
+    version: 3
+  };
+  downloadBlob(JSON.stringify(data, null, 2), 'application/json',
+    'elementdatenblatt_db_' + dateStamp() + '.json');
+  showToast('Datenbank exportiert.', 'success');
+}
+
+async function importDb(file) {
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!Array.isArray(data.materials) || !Array.isArray(data.fasteners)) {
+      throw new Error('Ungültiges Format: erwartet { materials: [...], fasteners: [...] }');
+    }
+    if (!confirm('Import wird die aktuelle Datenbank ersetzen.\n\nMaterialien: ' + data.materials.length + '\nVerbindungen: ' + data.fasteners.length + '\n\nFortfahren?')) return;
+    materialsDB = data.materials;
+    fastenersDB = data.fasteners;
+    saveToLs(LS_MAT, materialsDB);
+    saveToLs(LS_FAS, fastenersDB);
+    renderMaterialsDb();
+    renderFastenersDb();
+    showToast('✓ Datenbank importiert: ' + materialsDB.length + ' Materialien, ' + fastenersDB.length + ' Verbindungen.', 'success');
+  } catch (err) {
+    showToast('Import fehlgeschlagen: ' + err.message, 'error');
+  }
+}
+
+function resetDbToDefault() {
+  if (!confirm('Datenbank auf Auslieferungszustand zurücksetzen? Eigene Einträge gehen verloren.')) return;
+  materialsDB = JSON.parse(JSON.stringify(DEFAULT_MATERIALS));
+  fastenersDB = JSON.parse(JSON.stringify(DEFAULT_FASTENERS));
+  saveToLs(LS_MAT, materialsDB);
+  saveToLs(LS_FAS, fastenersDB);
+  renderMaterialsDb();
+  renderFastenersDb();
+  showToast('Datenbank zurückgesetzt.', 'success');
+}
+
+/* ============================================================
+   17) INITIALISIERUNG
+   ============================================================ */
+window.addEventListener('DOMContentLoaded', () => {
+  // File-Import
+  document.getElementById('fileInput').addEventListener('change', e => {
+    if (e.target.files[0]) handleFile(e.target.files[0]);
+  });
+
+  // Drag & Drop
+  const dz = document.getElementById('dropZone');
+  ['dragenter', 'dragover'].forEach(evt => {
+    dz.addEventListener(evt, e => { e.preventDefault(); dz.classList.add('dragover'); });
+  });
+  ['dragleave', 'drop'].forEach(evt => {
+    dz.addEventListener(evt, e => { e.preventDefault(); dz.classList.remove('dragover'); });
+  });
+  dz.addEventListener('drop', e => {
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+
+  // Tab-Wechsel
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  // DB-Import
+  document.getElementById('dbImportInput').addEventListener('change', e => {
+    if (e.target.files[0]) importDb(e.target.files[0]);
+    e.target.value = '';
+  });
+  document.getElementById('dbSearch').addEventListener('input', applyDbFilter);
+
+  bindHeaderInputs();
+  renderMaterialsDb();
+  renderFastenersDb();
+});
+</script>
+
+</body>
+</html>
